@@ -1,19 +1,23 @@
-.estudiantes-container {
+// Block: students-page
+.students-page {
   padding: 2rem;
   min-height: 100vh;
   background: #f7fafc;
-}
 
-.estudiantes-header {
-  margin-bottom: 2rem;
-  
-  h1 {
+  // Element: header
+  &__header {
+    margin-bottom: 2rem;
+  }
+
+  // Element: title
+  &__title {
     font-size: 2.5rem;
     color: #2d3748;
     margin-bottom: 0.5rem;
   }
-  
-  p {
+
+  // Element: subtitle
+  &__subtitle {
     color: #718096;
     font-size: 1.1rem;
   }

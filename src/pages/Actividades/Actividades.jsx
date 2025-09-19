@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import './Actividades.scss';
+import { Link } from 'react-router-dom';
 
 const Actividades = () => {
   const [activities, setActivities] = useState([
@@ -116,9 +117,12 @@ const Actividades = () => {
           <h1>Mis Actividades</h1>
           <p>Gestiona y organiza todas tus tareas académicas</p>
         </div>
-        <button className="create-activity-btn">
+        <Link
+          to="/crear-actividad"
+          className="create-activity-btn"
+        >
           + Nueva Actividad
-        </button>
+        </Link>
       </header>
 
       <div className="controls-section">

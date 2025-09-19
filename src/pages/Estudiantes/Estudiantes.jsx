@@ -55,9 +55,9 @@ const Estudiantes = () => {
   });
 
   return (
-    <div className="estudiantes-container">
-      <header className="estudiantes-header">
-        <h1>Gestión de Estudiantes</h1>
+    <div className="students-page">
+      <header className="students-page__header">
+        <h1 className="students-page__title">Gestión de Estudiantes</h1>
         <p>Administra la información de los estudiantes registrados</p>
       </header>
 

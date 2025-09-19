@@ -1,90 +1,178 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import './Dashboard.scss';
 
 const Dashboard = () => {
-  const [stats, setStats] = useState({
-    pendingTasks: 5,
-    completedTasks: 12,
-    totalSubjects: 6,
-    upcomingDeadlines: 3
+  // Datos de estadísticas principales
+  const [stats] = useState({
+    activeStudents: 18,
+    generalAverage: 4.2,
+    pendingSubmissions: 12,
+    attendance: 78
   });
 
-  const [recentActivities, setRecentActivities] = useState([
-    { id: 1, title: 'Tarea de Matemáticas', subject: 'Cálculo I', dueDate: '2025-09-20', status: 'pending' },
-    { id: 2, title: 'Ensayo de Historia', subject: 'Historia Universal', dueDate: '2025-09-22', status: 'in-progress' },
-    { id: 3, title: 'Práctica de Química', subject: 'Química Orgánica', dueDate: '2025-09-18', status: 'completed' }
+  // Datos para el gráfico de progreso semanal
+  const weeklyProgressData = [
+    { week: 'Sem 1', value: 2.5 },
+    { week: 'Sem 2', value: 3.2 },
+    { week: 'Sem 3', value: 2.8 },
+    { week: 'Sem 4', value: 3.8 },
+    { week: 'Sem 5', value: 4.1 },
+    { week: 'Sem 6', value: 3.9 },
+    { week: 'Sem 7', value: 4.2 }
+  ];
+
+  // Datos para el gráfico de distribución de calificaciones
+  const gradeDistributionData = [
+    { name: 'Excelente', value: 25, color: '#10B981' },
+    { name: 'Bueno', value: 35, color: '#3B82F6' },
+    { name: 'Regular', value: 25, color: '#F59E0B' },
+    { name: 'Deficiente', value: 15, color: '#EF4444' }
+  ];
+
+  // Alertas y notificaciones
+  const [alerts] = useState([
+    {
+      id: 1,
+      type: 'warning',
+      title: 'Estudiante en Riesgo',
+      description: 'María González - Bajo rendimiento en últimas 3 actividades',
+      action: 'Ver detalles'
+    },
+    {
+      id: 2,
+      type: 'info',
+      title: 'Entregas Vencidas',
+      description: '5 estudiantes no han entregado la tarea de la semana pasada',
+      action: 'Enviar recordatorio'
+    }
   ]);
 
   return (
-    <div className="dashboard-container">
-      <header className="dashboard-header">
-        <h1>Dashboard</h1>
-        <p>Resumen de tu progreso académico</p>
+    <div className="dashboard">
+      <header className="dashboard__header">
+        <h1 className="dashboard__title">Dashboard de Desempeño</h1>
+        <div className="dashboard__period-selector">
+          <select className="dashboard__select">
+            <option>Último mes</option>
+            <option>Últimos 3 meses</option>
+            <option>Último semestre</option>
+          </select>
+        </div>
       </header>
 
-      <main className="dashboard-main">
-        <section className="stats-section">
-          <div className="stat-card pending">
-            <div className="stat-number">{stats.pendingTasks}</div>
-            <div className="stat-label">Tareas Pendientes</div>
+      <main className="dashboard__main">
+        {/* Stats Cards */}
+        <section className="dashboard__stats">
+          <div className="stat-card">
+            <div className="stat-card__content">
+              <div className="stat-card__label">Estudiantes Activos</div>
+              <div className="stat-card__number">{stats.activeStudents}</div>
+            </div>
+            <div className="stat-card__icon">👥</div>
           </div>
           
-          <div className="stat-card completed">
-            <div className="stat-number">{stats.completedTasks}</div>
-            <div className="stat-label">Tareas Completadas</div>
+          <div className="stat-card">
+            <div className="stat-card__content">
+              <div className="stat-card__label">Promedio General</div>
+              <div className="stat-card__number">{stats.generalAverage}</div>
+            </div>
+            <div className="stat-card__icon">📊</div>
           </div>
           
-          <div className="stat-card subjects">
-            <div className="stat-number">{stats.totalSubjects}</div>
-            <div className="stat-label">Materias Activas</div>
+          <div className="stat-card">
+            <div className="stat-card__content">
+              <div className="stat-card__label">Entregas Pendientes</div>
+              <div className="stat-card__number">{stats.pendingSubmissions}</div>
+            </div>
+            <div className="stat-card__icon">⏰</div>
           </div>
           
-          <div className="stat-card deadlines">
-            <div className="stat-number">{stats.upcomingDeadlines}</div>
-            <div className="stat-label">Fechas Próximas</div>
+          <div className="stat-card">
+            <div className="stat-card__content">
+              <div className="stat-card__label">Asistencia</div>
+              <div className="stat-card__number">{stats.attendance}%</div>
+            </div>
+            <div className="stat-card__icon">📋</div>
           </div>
         </section>
 
-        <section className="content-section">
-          <div className="recent-activities">
-            <h2>Actividades Recientes</h2>
-            <div className="activities-list">
-              {recentActivities.map(activity => (
-                <div key={activity.id} className={`activity-item ${activity.status}`}>
-                  <div className="activity-info">
-                    <h3>{activity.title}</h3>
-                    <p>{activity.subject}</p>
-                    <span className="due-date">Vence: {activity.dueDate}</span>
-                  </div>
-                  <div className={`status-badge ${activity.status}`}>
-                    {activity.status === 'completed' ? 'Completada' : 
-                     activity.status === 'in-progress' ? 'En Progreso' : 'Pendiente'}
-                  </div>
-                </div>
-              ))}
+        {/* Charts Section */}
+        <section className="dashboard__charts">
+          <div className="chart-container">
+            <h3 className="chart-container__title">Progreso Semanal</h3>
+            <div className="chart-container__content">
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={weeklyProgressData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                  <XAxis dataKey="week" stroke="#718096" />
+                  <YAxis stroke="#718096" />
+                  <Tooltip 
+                    contentStyle={{
+                      backgroundColor: 'white',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '8px'
+                    }}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="value" 
+                    stroke="#3B82F6" 
+                    strokeWidth={3}
+                    dot={{ fill: '#3B82F6', strokeWidth: 2, r: 5 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
             </div>
           </div>
 
-          <div className="quick-actions">
-            <h2>Acciones Rápidas</h2>
-            <div className="actions-grid">
-              <button className="action-btn create-task">
-                <span className="action-icon">📝</span>
-                Nueva Actividad
-              </button>
-              <button className="action-btn view-calendar">
-                <span className="action-icon">📅</span>
-                Ver Calendario
-              </button>
-              <button className="action-btn chat">
-                <span className="action-icon">💬</span>
-                Abrir Chat
-              </button>
-              <button className="action-btn settings">
-                <span className="action-icon">⚙️</span>
-                Configuración
-              </button>
+          <div className="chart-container">
+            <h3 className="chart-container__title">Distribución de Calificaciones</h3>
+            <div className="chart-container__content">
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={gradeDistributionData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={100}
+                    paddingAngle={5}
+                    dataKey="value"
+                  >
+                    {gradeDistributionData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    contentStyle={{
+                      backgroundColor: 'white',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '8px'
+                    }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
             </div>
+          </div>
+        </section>
+
+        {/* Alerts Section */}
+        <section className="dashboard__alerts">
+          <h3 className="dashboard__alerts-title">Alertas y Notificaciones</h3>
+          <div className="alerts-list">
+            {alerts.map(alert => (
+              <div key={alert.id} className={`alert-item alert-item--${alert.type}`}>
+                <div className="alert-item__icon">
+                  {alert.type === 'warning' ? '⚠️' : 'ℹ️'}
+                </div>
+                <div className="alert-item__content">
+                  <h4 className="alert-item__title">{alert.title}</h4>
+                  <p className="alert-item__description">{alert.description}</p>
+                  <button className="alert-item__action">{alert.action}</button>
+                </div>
+              </div>
+            ))}
           </div>
         </section>
       </main>

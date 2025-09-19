@@ -1,10 +1,11 @@
-/* Estilos principales de la aplicación */
+/* Block: app */
 .app {
   display: flex;
   min-height: 100vh;
 }
 
-.main-content {
+/* Element: main-content */
+.app__main-content {
   flex: 1;
   margin-left: 280px;
   background: #f7fafc;
@@ -14,13 +15,13 @@
 
 /* Responsive design */
 @media (max-width: 1024px) {
-  .main-content {
+  .app__main-content {
     margin-left: 70px;
   }
 }
 
 @media (max-width: 768px) {
-  .main-content {
+  .app__main-content {
     margin-left: 0;
   }
 }
@@ -56,38 +57,38 @@
   }
 }
 
-.fade-in {
+/* Block: animation */
+.animation--fade-in {
   animation: fadeIn 0.3s ease-in-out;
 }
 
-/* Utilidades de espaciado */
-.mb-1 { margin-bottom: 0.25rem; }
-.mb-2 { margin-bottom: 0.5rem; }
-.mb-3 { margin-bottom: 0.75rem; }
-.mb-4 { margin-bottom: 1rem; }
+/* Block: spacing utilities */
+.spacing__margin-bottom--small { margin-bottom: 0.25rem; }
+.spacing__margin-bottom--medium { margin-bottom: 0.5rem; }
+.spacing__margin-bottom--large { margin-bottom: 0.75rem; }
+.spacing__margin-bottom--extra-large { margin-bottom: 1rem; }
 
-.mt-1 { margin-top: 0.25rem; }
-.mt-2 { margin-top: 0.5rem; }
-.mt-3 { margin-top: 0.75rem; }
-.mt-4 { margin-top: 1rem; }
+.spacing__margin-top--small { margin-top: 0.25rem; }
+.spacing__margin-top--medium { margin-top: 0.5rem; }
+.spacing__margin-top--large { margin-top: 0.75rem; }
+.spacing__margin-top--extra-large { margin-top: 1rem; }
 
-.p-1 { padding: 0.25rem; }
-.p-2 { padding: 0.5rem; }
-.p-3 { padding: 0.75rem; }
-.p-4 { padding: 1rem; }
+.spacing__padding--small { padding: 0.25rem; }
+.spacing__padding--medium { padding: 0.5rem; }
+.spacing__padding--large { padding: 0.75rem; }
+.spacing__padding--extra-large { padding: 1rem; }
 
-/* Utilidades de texto */
-.text-center { text-align: center; }
-.text-left { text-align: left; }
-.text-right { text-align: right; }
+/* Block: text utilities */
+.text__align--center { text-align: center; }
+.text__align--left { text-align: left; }
+.text__align--right { text-align: right; }
 
-.font-bold { font-weight: 700; }
-.font-semibold { font-weight: 600; }
-.font-medium { font-weight: 500; }
+.text__weight--bold { font-weight: 700; }
+.text__weight--semibold { font-weight: 600; }
+.text__weight--medium { font-weight: 500; }
 
-/* Utilidades de colores */
-.text-primary { color: #4299e1; }
-.text-secondary { color: #718096; }
-.text-success { color: #48bb78; }
-.text-warning { color: #ed8936; }
-.text-danger { color: #f56565; }
+.text__color--primary { color: #4299e1; }
+.text__color--secondary { color: #718096; }
+.text__color--success { color: #48bb78; }
+.text__color--warning { color: #ed8936; }
+.text__color--danger { color: #f56565; }

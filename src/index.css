@@ -135,8 +135,8 @@ input, select, textarea {
   font-size: 1rem;
 }
 
-/* Clases utilitarias */
-.sr-only {
+/* Block: utility */
+.utility__screen-reader--only {
   position: absolute;
   width: 1px;
   height: 1px;
@@ -148,13 +148,22 @@ input, select, textarea {
   border: 0;
 }
 
-.text-truncate {
+.utility__text--truncate {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-/* Animaciones */
+/* Block: animation */
+.animation__spin {
+  animation: spin 1s linear infinite;
+}
+
+.animation__pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Keyframes */
 @keyframes spin {
   to {
     transform: rotate(360deg);
@@ -168,12 +177,4 @@ input, select, textarea {
   50% {
     opacity: 0.5;
   }
-}
-
-.animate-spin {
-  animation: spin 1s linear infinite;
-}
-
-.animate-pulse {
-  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }

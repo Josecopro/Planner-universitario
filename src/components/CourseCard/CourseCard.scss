@@ -1,0 +1,215 @@
+// Block: course-card
+.course-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+  border: 1px solid #e2e8f0;
+  position: relative;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  }
+
+  // Modifier: red
+  &--red {
+    border-left: 4px solid #e53e3e;
+
+    .course-card__icon {
+      background: #fed7d7;
+      color: #e53e3e;
+    }
+  }
+
+  // Modifier: blue
+  &--blue {
+    border-left: 4px solid #3182ce;
+
+    .course-card__icon {
+      background: #bee3f8;
+      color: #3182ce;
+    }
+  }
+
+  // Modifier: green
+  &--green {
+    border-left: 4px solid #38a169;
+
+    .course-card__icon {
+      background: #c6f6d5;
+      color: #38a169;
+    }
+  }
+
+  // Modifier: purple
+  &--purple {
+    border-left: 4px solid #805ad5;
+
+    .course-card__icon {
+      background: #e9d8fd;
+      color: #805ad5;
+    }
+  }
+
+  // Modifier: orange
+  &--orange {
+    border-left: 4px solid #dd6b20;
+
+    .course-card__icon {
+      background: #fbd38d;
+      color: #dd6b20;
+    }
+  }
+
+  // Element: header
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+  }
+
+  // Element: image
+  &__image {
+    width: 60px;
+    height: 60px;
+    border-radius: 8px;
+    object-fit: cover;
+    object-position: center;
+  }
+
+  // Element: icon
+  &__icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+  }
+
+  // Element: content
+  &__content {
+    flex: 1;
+    margin-bottom: 1.5rem;
+  }
+
+  // Element: title
+  &__title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 0.5rem;
+    line-height: 1.3;
+    margin-top: 0;
+  }
+
+  // Element: code
+  &__code {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #4a5568;
+    margin-bottom: 0.25rem;
+    margin-top: 0;
+  }
+
+  // Element: info
+  &__info {
+    font-size: 0.85rem;
+    color: #718096;
+    margin-bottom: 0.5rem;
+    margin-top: 0;
+  }
+
+  // Element: group
+  &__group {
+    font-size: 0.85rem;
+    color: #4a5568;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    margin-top: 0;
+  }
+
+  // Element: stats
+  &__stats {
+    margin-bottom: 1rem;
+  }
+
+  // Element: students
+  &__students {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    color: #4a5568;
+  }
+
+  // Element: students-icon
+  &__students-icon {
+    font-size: 1rem;
+  }
+
+  // Element: students-count
+  &__students-count {
+    font-weight: 500;
+  }
+
+  // Element: button
+  &__button {
+    width: 100%;
+    background: #a53f3f;
+    color: white;
+    border: none;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.9rem;
+    margin-top: auto;
+
+    &:hover {
+      background: #822727;
+      transform: translateY(-1px);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+  }
+
+  // Responsive design
+  @media (max-width: 768px) {
+    padding: 1rem;
+
+    &__icon,
+    &__image {
+      width: 48px;
+      height: 48px;
+    }
+
+    &__icon {
+      font-size: 1.5rem;
+    }
+
+    &__title {
+      font-size: 1rem;
+    }
+
+    &__code {
+      font-size: 0.85rem;
+    }
+
+    &__info,
+    &__group {
+      font-size: 0.8rem;
+    }
+  }
+}
