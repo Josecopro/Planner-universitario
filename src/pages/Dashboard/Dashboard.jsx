@@ -25,7 +25,7 @@ const Dashboard = () => {
   // Datos para el gráfico de distribución de calificaciones
   const gradeDistributionData = [
     { name: 'Excelente', value: 25, color: '#10B981' },
-    { name: 'Bueno', value: 35, color: '#3B82F6' },
+    { name: 'Bueno', value: 35, color: '#932428' },
     { name: 'Regular', value: 25, color: '#F59E0B' },
     { name: 'Deficiente', value: 15, color: '#EF4444' }
   ];
@@ -117,9 +117,9 @@ const Dashboard = () => {
                   <Line 
                     type="monotone" 
                     dataKey="value" 
-                    stroke="#3B82F6" 
+                    stroke="#932428" 
                     strokeWidth={3}
-                    dot={{ fill: '#3B82F6', strokeWidth: 2, r: 5 }}
+                    dot={{ fill: '#932428', strokeWidth: 2, r: 5 }}
                   />
                 </LineChart>
               </ResponsiveContainer>

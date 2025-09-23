@@ -1,33 +1,26 @@
-/* Variables CSS para colores y espaciado */
 :root {
-  /* Colores principales */
-  --primary-color: #4299e1;
-  --primary-dark: #3182ce;
+  --primary-color: #932428;
+  --primary-dark: #69181b;
   --secondary-color: #718096;
   --success-color: #48bb78;
   --warning-color: #ed8936;
   --danger-color: #f56565;
   
-  /* Colores de texto */
   --text-primary: #2d3748;
   --text-secondary: #4a5568;
   --text-muted: #718096;
   
-  /* Colores de fondo */
   --bg-primary: #ffffff;
   --bg-secondary: #f7fafc;
   --bg-tertiary: #edf2f7;
   
-  /* Sombras */
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
   --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
   
-  /* Bordes */
   --border-color: #e2e8f0;
   --border-radius: 8px;
   
-  /* Espaciado */
   --spacing-xs: 0.25rem;
   --spacing-sm: 0.5rem;
   --spacing-md: 1rem;
@@ -129,7 +122,6 @@ button {
   }
 }
 
-/* Estilos de inputs */
 input, select, textarea {
   font-family: inherit;
   font-size: 1rem;

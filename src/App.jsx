@@ -13,23 +13,40 @@ import {
 import './App.css';
 
 function App() {
+  const pagesWithoutNav = [
+    { path: '/', component: Inicio },
+    { path: '*', component: NotFound }
+  ];
+
+  const pagesWithNav = [
+    { path: '/dashboard', component: Dashboard },
+    { path: '/estudiantes', component: Estudiantes },
+    { path: '/actividades', component: Actividades },
+    { path: '/crear-actividad', component: CrearActividad },
+    { path: '/chat', component: Chat },
+    { path: '/configuracion', component: Configuracion }
+  ];
+
+  const createRouteWithNav = (Component) => (
+    <>
+      <Navigation />
+      <main className="app__main-content">
+        <Component />
+      </main>
+    </>
+  );
+
   return (
     <div className="app">
-      <Navigation />
-      
-      <main className="app__main-content">
-        <Routes>
-          <Route path="/" element={<Inicio />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/estudiantes" element={<Estudiantes />} />
-          <Route path="/actividades" element={<Actividades />} />
-          <Route path="/crear-actividad" element={<CrearActividad />} />
-          <Route path="/chat" element={<Chat />} />
-          <Route path="/configuracion" element={<Configuracion />} />
-          {/* Ruta 404 - página no encontrada */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </main>
+      <Routes>
+        {pagesWithoutNav.map(({ path, component: Component }) => (
+          <Route key={path} path={path} element={<Component />} />
+        ))}
+        
+        {pagesWithNav.map(({ path, component: Component }) => (
+          <Route key={path} path={path} element={createRouteWithNav(Component)} />
+        ))}
+      </Routes>
     </div>
   );
 }
@@ -43,7 +60,8 @@ const NotFound = () => (
     justifyContent: 'center', 
     height: '100vh',
     textAlign: 'center',
-    padding: '2rem'
+    padding: '2rem',
+    width: '100%',
   }}>
     <h1 style={{ fontSize: '4rem', margin: '0', color: '#2d3748' }}>404</h1>
     <h2 style={{ color: '#4a5568', marginBottom: '1rem' }}>Página no encontrada</h2>
@@ -53,7 +71,7 @@ const NotFound = () => (
     <a 
       href="#/" 
       style={{
-        background: '#4299e1',
+        background: '#932428',
         color: 'white',
         padding: '0.75rem 2rem',
         borderRadius: '8px',

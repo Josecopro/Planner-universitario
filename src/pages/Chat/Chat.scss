@@ -181,7 +181,7 @@
     flex-direction: row-reverse;
     
     .message-content {
-      background: #4299e1;
+      background: var(--primary-color);
       color: white;
       border-radius: 18px 18px 4px 18px;
     }
@@ -223,7 +223,7 @@
 
 .message-sender {
   font-size: 0.75rem;
-  color: #4299e1;
+  color: var(--primary-color);
   font-weight: 600;
   margin-bottom: 0.25rem;
 }
@@ -257,8 +257,8 @@
   border: 1px solid #e2e8f0;
   
   &:focus-within {
-    border-color: #4299e1;
-    box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(147, 36, 40, 0.1);
   }
 }
 
@@ -296,7 +296,7 @@
   height: 45px;
   border-radius: 50%;
   border: none;
-  background: #4299e1;
+  background: var(--primary-color);
   color: white;
   font-size: 1.2rem;
   cursor: pointer;
@@ -306,7 +306,7 @@
   transition: all 0.2s ease;
   
   &:hover:not(:disabled) {
-    background: #3182ce;
+    background: var(--primary-dark);
     transform: scale(1.05);
   }
   

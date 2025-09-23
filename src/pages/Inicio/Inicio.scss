@@ -1,8 +1,28 @@
 // Block: courses-page
+
 .courses-page {
   padding: 2rem;
   min-height: 100vh;
-  background: #f8fafc;
+  ba  &__input {
+    flex: 1;
+    padding: 0.75rem 3rem 0.75rem 1rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 1rem;
+    background: white;
+
+    &:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px rgba(147, 36, 40, 0.1);
+    }
+
+    &::placeholder {
+      color: #a0aec0;
+    }
+  }
+  margin-left: 0px;
+  width: 100%;
 
   // Element: header
   &__header {
@@ -87,8 +107,8 @@
 
     &:focus {
       outline: none;
-      border-color: #4299e1;
-      box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px rgba(147, 36, 40, 0.1);
     }
 
     &::placeholder {
@@ -124,8 +144,8 @@
 
     &:focus {
       outline: none;
-      border-color: #4299e1;
-      box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px rgba(147, 36, 40, 0.1);
     }
 
     @media (max-width: 768px) {
@@ -164,13 +184,13 @@
     }
   }
 
-  // Modifier: blue
-  &--blue {
-    border-left: 4px solid #3182ce;
+  // Modifier: primary
+  &--primary {
+    border-left: 4px solid var(--primary-color);
 
     .course-card__icon {
-      background: #bee3f8;
-      color: #3182ce;
+      background: rgba(147, 36, 40, 0.1);
+      color: var(--primary-color);
     }
   }
 

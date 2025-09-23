@@ -27,13 +27,13 @@
     }
   }
 
-  // Modifier: blue
-  &--blue {
-    border-left: 4px solid #3182ce;
+  // Modifier: primary
+  &--primary {
+    border-left: 4px solid var(--primary-color);
 
     .course-card__icon {
-      background: #bee3f8;
-      color: #3182ce;
+      background: #fdf2f2;
+      color: var(--primary-color);
     }
   }
 

@@ -26,7 +26,7 @@
 }
 
 .create-activity-btn {
-  background: #4299e1;
+  background: var(--primary-color);
   color: white;
   border: none;
   padding: 1rem 2rem;
@@ -37,7 +37,7 @@
   white-space: nowrap;
   
   &:hover {
-    background: #3182ce;
+    background: var(--primary-dark);
     transform: translateY(-1px);
   }
 }
@@ -67,8 +67,8 @@
   
   &:focus {
     outline: none;
-    border-color: #4299e1;
-    box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(147, 36, 40, 0.1);
   }
 }
 
@@ -93,9 +93,9 @@
   }
   
   &.active {
-    background: #4299e1;
+    background: var(--primary-color);
     color: white;
-    border-color: #4299e1;
+    border-color: var(--primary-color);
   }
 }
 
@@ -116,7 +116,7 @@
   .stat-number {
     font-size: 2.5rem;
     font-weight: 700;
-    color: #4299e1;
+    color: var(--primary-color);
     margin-bottom: 0.5rem;
   }
   
@@ -195,11 +195,11 @@
 }
 
 .activity-subject {
-  color: #4299e1;
+  color: var(--primary-color);
   font-size: 0.9rem;
   font-weight: 500;
   padding: 0.25rem 0.75rem;
-  background: #ebf8ff;
+  background: #fdf2f2;
   border-radius: 12px;
 }
 
@@ -288,8 +288,8 @@
   }
   
   &.edit:hover {
-    background: #ebf8ff;
-    border-color: #4299e1;
+    background: #fdf2f2;
+    border-color: var(--primary-color);
   }
   
   &.view:hover {

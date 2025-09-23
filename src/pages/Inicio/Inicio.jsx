@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import CourseCard from '../../components/CourseCard';
 import './Inicio.scss';
+import { useNavigate } from 'react-router-dom';
 
 const Inicio = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -94,6 +95,10 @@ const Inicio = () => {
     return matchesSearch && matchesSemester && matchesProgram;
   });
 
+  // Importa useNavigate de react-router-dom
+
+  const navigate = useNavigate();
+
   return (
     <div className="courses-page">
       <header className="courses-page__header">
@@ -161,7 +166,7 @@ const Inicio = () => {
             icon={curso.icon}
             imagen={curso.imagen}
             color={curso.color}
-            onClick={() => console.log(`Clicked on course: ${curso.nombre}`)}
+            onClick={() => navigate('/dashboard')}
           />
         ))}
       </main>

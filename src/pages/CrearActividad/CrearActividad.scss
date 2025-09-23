@@ -74,8 +74,8 @@
     
     &:focus {
       outline: none;
-      border-color: #4299e1;
-      box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px rgba(147, 36, 40, 0.1);
     }
     
     &.error {
@@ -107,8 +107,8 @@
   min-height: 60px;
   
   &:focus-within {
-    border-color: #4299e1;
-    box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(147, 36, 40, 0.1);
   }
 }
 
@@ -120,7 +120,7 @@
 }
 
 .tag {
-  background: #4299e1;
+  background: var(--primary-color);
   color: white;
   padding: 0.25rem 0.75rem;
   border-radius: 12px;
@@ -166,7 +166,7 @@
   }
   
   button {
-    background: #4299e1;
+    background: var(--primary-color);
     color: white;
     border: none;
     border-radius: 4px;
@@ -176,7 +176,7 @@
     font-size: 1rem;
     
     &:hover {
-      background: #3182ce;
+      background: var(--primary-dark);
     }
   }
 }
@@ -223,8 +223,8 @@
   transition: all 0.2s ease;
   
   &:hover {
-    border-color: #4299e1;
-    color: #4299e1;
+    border-color: var(--primary-color);
+    color: var(--primary-color);
     background: #f7fafc;
   }
 }
@@ -306,7 +306,7 @@
   }
   
   .preview-subject {
-    color: #4299e1;
+    color: var(--primary-color);
     font-size: 0.9rem;
     font-weight: 500;
     margin-bottom: 0.75rem;
@@ -377,7 +377,7 @@
       
       &:before {
         content: "•";
-        color: #4299e1;
+        color: var(--primary-color);
         font-weight: bold;
         position: absolute;
         left: 0.5rem;
