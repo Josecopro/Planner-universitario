@@ -122,6 +122,10 @@
   .navigation {
     width: 70px;
 
+    &__header{
+      padding: 3px
+    }
+
     &__title {
       display: none;
     }
