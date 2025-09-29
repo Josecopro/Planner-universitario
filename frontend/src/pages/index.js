@@ -1,4 +1,3 @@
-// Exportaciones de todas las páginas del planner universitario
 export { default as Inicio } from './Inicio/Inicio';
 export { default as Dashboard } from './Dashboard/Dashboard';
 export { default as Estudiantes } from './Estudiantes/Estudiantes';

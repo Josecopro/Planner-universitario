@@ -1,58 +1,66 @@
 import React, { useState } from 'react';
+import { useApi, useMutation, studentsApi } from '../../services/api';
 import './Estudiantes.scss';
 
 const Estudiantes = () => {
-  const [students, setStudents] = useState([
-    {
-      id: 1,
-      name: 'María González',
-      email: 'maria.gonzalez@universidad.edu',
-      career: 'Ingeniería en Sistemas',
-      semester: 6,
-      status: 'active',
-      avatar: 'M'
-    },
-    {
-      id: 2,
-      name: 'Carlos Rodríguez',
-      email: 'carlos.rodriguez@universidad.edu',
-      career: 'Administración de Empresas',
-      semester: 4,
-      status: 'active',
-      avatar: 'C'
-    },
-    {
-      id: 3,
-      name: 'Ana López',
-      email: 'ana.lopez@universidad.edu',
-      career: 'Psicología',
-      semester: 8,
-      status: 'inactive',
-      avatar: 'A'
-    },
-    {
-      id: 4,
-      name: 'Diego Martínez',
-      email: 'diego.martinez@universidad.edu',
-      career: 'Medicina',
-      semester: 10,
-      status: 'active',
-      avatar: 'D'
-    }
-  ]);
-
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
 
-  const filteredStudents = students.filter(student => {
-    const matchesSearch = student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         student.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         student.career.toLowerCase().includes(searchTerm.toLowerCase());
+  const { data: students, loading, error, refetch } = useApi(() => studentsApi.getAll());
+
+  const { mutate, loading: mutationLoading } = useMutation();
+
+  // Asegurar que students sea un array antes de usar filter
+  const studentsArray = students || [];
+  
+  console.log('Estudiantes Component:', { students, loading, error });
+  
+  const filteredStudents = studentsArray.filter(student => {
+    const matchesSearch = student.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         student.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         student.career?.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesFilter = filterStatus === 'all' || student.status === filterStatus;
     
     return matchesSearch && matchesFilter;
   });
+
+  const handleDeleteStudent = async (id, name) => {
+    if (window.confirm(`¿Estás seguro de que quieres eliminar a ${name}?`)) {
+      try {
+        await mutate(() => studentsApi.delete(id));
+        await refetch(); // Actualizar la lista
+        alert('Estudiante eliminado correctamente');
+      } catch (error) {
+        alert(`Error al eliminar estudiante: ${error.message}`);
+      }
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="students-page">
+        <div className="loading-state">
+          <div className="spinner"></div>
+          <p>Cargando estudiantes...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="students-page">
+        <div className="error-state">
+          <h2>Error al cargar estudiantes</h2>
+          <p>{error.message}</p>
+          <button onClick={refetch} className="retry-button">
+            Reintentar
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="students-page">
@@ -91,15 +99,15 @@ const Estudiantes = () => {
 
       <div className="students-stats">
         <div className="stat-item">
-          <span className="stat-number">{students.length}</span>
+          <span className="stat-number">{studentsArray.length}</span>
           <span className="stat-label">Total</span>
         </div>
         <div className="stat-item">
-          <span className="stat-number">{students.filter(s => s.status === 'active').length}</span>
+          <span className="stat-number">{studentsArray.filter(s => s.status === 'active').length}</span>
           <span className="stat-label">Activos</span>
         </div>
         <div className="stat-item">
-          <span className="stat-number">{students.filter(s => s.status === 'inactive').length}</span>
+          <span className="stat-number">{studentsArray.filter(s => s.status === 'inactive').length}</span>
           <span className="stat-label">Inactivos</span>
         </div>
       </div>
@@ -125,7 +133,13 @@ const Estudiantes = () => {
             <div className="student-actions">
               <button className="action-btn edit">✏️</button>
               <button className="action-btn view">👁️</button>
-              <button className="action-btn delete">🗑️</button>
+              <button 
+                className="action-btn delete"
+                onClick={() => handleDeleteStudent(student.id, student.name)}
+                disabled={mutationLoading}
+              >
+                🗑️
+              </button>
             </div>
           </div>
         ))}

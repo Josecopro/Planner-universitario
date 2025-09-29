@@ -1,52 +1,45 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { useApi } from '../../services/api';
+import { dashboardApi } from '../../services/api';
 import './Dashboard.scss';
 
 const Dashboard = () => {
-  // Datos de estadísticas principales
-  const [stats] = useState({
-    activeStudents: 18,
-    generalAverage: 4.2,
-    pendingSubmissions: 12,
-    attendance: 78
-  });
+  // Usar el hook personalizado para obtener datos del dashboard
+  const { data: dashboardData, loading, error, refetch } = useApi(() => dashboardApi.getData());
 
-  // Datos para el gráfico de progreso semanal
-  const weeklyProgressData = [
-    { week: 'Sem 1', value: 2.5 },
-    { week: 'Sem 2', value: 3.2 },
-    { week: 'Sem 3', value: 2.8 },
-    { week: 'Sem 4', value: 3.8 },
-    { week: 'Sem 5', value: 4.1 },
-    { week: 'Sem 6', value: 3.9 },
-    { week: 'Sem 7', value: 4.2 }
-  ];
+  // Mostrar estado de carga
+  if (loading) {
+    return (
+      <div className="dashboard">
+        <div className="dashboard__loading">
+          <div className="spinner"></div>
+          <p>Cargando datos del dashboard...</p>
+        </div>
+      </div>
+    );
+  }
 
-  // Datos para el gráfico de distribución de calificaciones
-  const gradeDistributionData = [
-    { name: 'Excelente', value: 25, color: '#10B981' },
-    { name: 'Bueno', value: 35, color: '#932428' },
-    { name: 'Regular', value: 25, color: '#F59E0B' },
-    { name: 'Deficiente', value: 15, color: '#EF4444' }
-  ];
+  // Mostrar error si ocurre
+  if (error) {
+    return (
+      <div className="dashboard">
+        <div className="dashboard__error">
+          <h2>Error al cargar datos</h2>
+          <p>{error.message}</p>
+          <button onClick={refetch} className="retry-button">
+            Reintentar
+          </button>
+        </div>
+      </div>
+    );
+  }
 
-  // Alertas y notificaciones
-  const [alerts] = useState([
-    {
-      id: 1,
-      type: 'warning',
-      title: 'Estudiante en Riesgo',
-      description: 'María González - Bajo rendimiento en últimas 3 actividades',
-      action: 'Ver detalles'
-    },
-    {
-      id: 2,
-      type: 'info',
-      title: 'Entregas Vencidas',
-      description: '5 estudiantes no han entregado la tarea de la semana pasada',
-      action: 'Enviar recordatorio'
-    }
-  ]);
+  // Extraer datos de la respuesta de la API
+  const stats = dashboardData?.stats || {};
+  const weeklyProgressData = dashboardData?.weekly_progress || [];
+  const gradeDistributionData = dashboardData?.grade_distribution || [];
+  const alerts = dashboardData?.alerts || [];
 
   return (
     <div className="dashboard">
@@ -58,6 +51,9 @@ const Dashboard = () => {
             <option>Últimos 3 meses</option>
             <option>Último semestre</option>
           </select>
+          <button onClick={refetch} className="refresh-button" title="Actualizar datos">
+            🔄
+          </button>
         </div>
       </header>
 
@@ -67,7 +63,7 @@ const Dashboard = () => {
           <div className="stat-card">
             <div className="stat-card__content">
               <div className="stat-card__label">Estudiantes Activos</div>
-              <div className="stat-card__number">{stats.activeStudents}</div>
+              <div className="stat-card__number">{stats.active_students || 0}</div>
             </div>
             <div className="stat-card__icon">👥</div>
           </div>
@@ -75,7 +71,7 @@ const Dashboard = () => {
           <div className="stat-card">
             <div className="stat-card__content">
               <div className="stat-card__label">Promedio General</div>
-              <div className="stat-card__number">{stats.generalAverage}</div>
+              <div className="stat-card__number">{stats.general_average || 0}</div>
             </div>
             <div className="stat-card__icon">📊</div>
           </div>
@@ -83,7 +79,7 @@ const Dashboard = () => {
           <div className="stat-card">
             <div className="stat-card__content">
               <div className="stat-card__label">Entregas Pendientes</div>
-              <div className="stat-card__number">{stats.pendingSubmissions}</div>
+              <div className="stat-card__number">{stats.pending_submissions || 0}</div>
             </div>
             <div className="stat-card__icon">⏰</div>
           </div>
@@ -91,7 +87,7 @@ const Dashboard = () => {
           <div className="stat-card">
             <div className="stat-card__content">
               <div className="stat-card__label">Asistencia</div>
-              <div className="stat-card__number">{stats.attendance}%</div>
+              <div className="stat-card__number">{stats.attendance || 0}%</div>
             </div>
             <div className="stat-card__icon">📋</div>
           </div>

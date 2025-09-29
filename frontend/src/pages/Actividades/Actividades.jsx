@@ -1,73 +1,29 @@
 import React, { useState } from 'react';
+import { useApi, useMutation, activitiesApi } from '../../services/api';
 import './Actividades.scss';
 import { Link } from 'react-router-dom';
 
 const Actividades = () => {
-  const [activities, setActivities] = useState([
-    {
-      id: 1,
-      title: 'Tarea de Cálculo Diferencial',
-      subject: 'Cálculo I',
-      description: 'Resolver ejercicios del capítulo 3: Derivadas',
-      dueDate: '2025-09-20',
-      priority: 'high',
-      status: 'pending',
-      createdAt: '2025-09-15'
-    },
-    {
-      id: 2,
-      title: 'Ensayo sobre la Revolución Industrial',
-      subject: 'Historia Universal',
-      description: 'Redactar un ensayo de 1500 palabras sobre el impacto social de la Revolución Industrial',
-      dueDate: '2025-09-25',
-      priority: 'medium',
-      status: 'in-progress',
-      createdAt: '2025-09-12'
-    },
-    {
-      id: 3,
-      title: 'Laboratorio de Química Orgánica',
-      subject: 'Química',
-      description: 'Práctica de síntesis de compuestos orgánicos',
-      dueDate: '2025-09-18',
-      priority: 'high',
-      status: 'completed',
-      createdAt: '2025-09-10'
-    },
-    {
-      id: 4,
-      title: 'Proyecto Final de Programación',
-      subject: 'Programación',
-      description: 'Desarrollar una aplicación web usando React y Node.js',
-      dueDate: '2025-10-15',
-      priority: 'high',
-      status: 'pending',
-      createdAt: '2025-09-01'
-    },
-    {
-      id: 5,
-      title: 'Presentación de Marketing',
-      subject: 'Marketing Digital',
-      description: 'Preparar presentación sobre estrategias de marketing digital',
-      dueDate: '2025-09-22',
-      priority: 'low',
-      status: 'pending',
-      createdAt: '2025-09-14'
-    }
-  ]);
-
+  const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterPriority, setFilterPriority] = useState('all');
+  const [filterSubject, setFilterSubject] = useState('all');
   const [sortBy, setSortBy] = useState('dueDate');
 
-  const filteredAndSortedActivities = activities
+  const { data: activities, loading, error, refetch } = useApi(() => activitiesApi.getAll());
+  const { mutate, loading: mutationLoading } = useMutation();
+
+  // Asegurar que activities sea un array antes de usar filter
+  const activitiesArray = activities || [];
+
+  const filteredAndSortedActivities = activitiesArray
     .filter(activity => {
       const statusMatch = filterStatus === 'all' || activity.status === filterStatus;
       const priorityMatch = filterPriority === 'all' || activity.priority === filterPriority;
       return statusMatch && priorityMatch;
     })
     .sort((a, b) => {
-      if (sortBy === 'dueDate') return new Date(a.dueDate) - new Date(b.dueDate);
+      if (sortBy === 'dueDate') return new Date(a.due_date || a.dueDate) - new Date(b.due_date || b.dueDate);
       if (sortBy === 'priority') {
         const priorityOrder = { high: 3, medium: 2, low: 1 };
         return priorityOrder[b.priority] - priorityOrder[a.priority];
@@ -109,6 +65,43 @@ const Actividades = () => {
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     return diffDays;
   };
+
+  const handleDeleteActivity = async (id, title) => {
+    if (window.confirm(`¿Estás seguro de que quieres eliminar "${title}"?`)) {
+      try {
+        await mutate(() => activitiesApi.delete(id));
+        await refetch(); // Actualizar la lista
+        alert('Actividad eliminada correctamente');
+      } catch (error) {
+        alert(`Error al eliminar actividad: ${error.message}`);
+      }
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="actividades-container">
+        <div className="loading-state">
+          <div className="spinner"></div>
+          <p>Cargando actividades...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="actividades-container">
+        <div className="error-state">
+          <h2>Error al cargar actividades</h2>
+          <p>{error.message}</p>
+          <button onClick={refetch} className="retry-button">
+            Reintentar
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="actividades-container">
@@ -188,7 +181,7 @@ const Actividades = () => {
 
       <div className="activities-list">
         {filteredAndSortedActivities.map(activity => {
-          const daysUntilDue = getDaysUntilDue(activity.dueDate);
+          const daysUntilDue = getDaysUntilDue(activity.due_date || activity.dueDate);
           const isOverdue = daysUntilDue < 0 && activity.status !== 'completed';
           const isUrgent = daysUntilDue <= 3 && daysUntilDue >= 0 && activity.status !== 'completed';
 
@@ -223,7 +216,7 @@ const Actividades = () => {
                   <div className="due-date">
                     <span className="date-label">Vence:</span>
                     <span className={`date-value ${isOverdue ? 'overdue' : isUrgent ? 'urgent' : ''}`}>
-                      {formatDate(activity.dueDate)}
+                      {formatDate(activity.due_date || activity.dueDate)}
                       {isOverdue && ` (${Math.abs(daysUntilDue)} días atrasado)`}
                       {isUrgent && ` (${daysUntilDue} días restantes)`}
                     </span>
@@ -233,7 +226,13 @@ const Actividades = () => {
                 <div className="activity-actions">
                   <button className="action-btn edit">✏️</button>
                   <button className="action-btn view">👁️</button>
-                  <button className="action-btn delete">🗑️</button>
+                  <button 
+                    className="action-btn delete"
+                    onClick={() => handleDeleteActivity(activity.id, activity.title)}
+                    disabled={mutationLoading}
+                  >
+                    🗑️
+                  </button>
                   {activity.status !== 'completed' && (
                     <button className="action-btn complete">✅</button>
                   )}

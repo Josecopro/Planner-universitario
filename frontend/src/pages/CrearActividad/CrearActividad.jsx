@@ -1,7 +1,12 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useMutation, activitiesApi } from '../../services/api';
 import './CrearActividad.scss';
 
 const CrearActividad = () => {
+  const navigate = useNavigate();
+  const { mutate, loading: isCreating } = useMutation();
+  
   const [formData, setFormData] = useState({
     title: '',
     subject: '',
@@ -56,7 +61,7 @@ const CrearActividad = () => {
   };
 
   const handleAddTag = (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     if (newTag.trim() && !formData.tags.includes(newTag.trim())) {
       setFormData(prev => ({
         ...prev,
@@ -124,28 +129,50 @@ const CrearActividad = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (validateForm()) {
-      console.log('Datos de la actividad:', formData);
-      // Aquí iría la lógica para guardar la actividad
-      alert('¡Actividad creada exitosamente!');
-      
-      // Reset form
-      setFormData({
-        title: '',
-        subject: '',
-        description: '',
-        dueDate: '',
-        dueTime: '',
-        priority: 'medium',
-        category: 'tarea',
-        estimatedHours: '',
-        tags: [],
-        reminders: [],
-        attachments: []
-      });
+      try {
+        // Preparar datos para la API
+        const activityData = {
+          title: formData.title,
+          subject: formData.subject,
+          description: formData.description,
+          due_date: formData.dueDate, // Backend usa due_date (snake_case)
+          priority: formData.priority,
+          status: 'pending', // Nuevo estado por defecto
+          category: formData.category,
+          estimated_hours: formData.estimatedHours ? parseInt(formData.estimatedHours) : null,
+          tags: formData.tags
+        };
+
+        await mutate(() => activitiesApi.create(activityData));
+        
+        alert('¡Actividad creada exitosamente!');
+        
+        // Reset form
+        setFormData({
+          title: '',
+          subject: '',
+          description: '',
+          dueDate: '',
+          dueTime: '',
+          priority: 'medium',
+          category: 'tarea',
+          estimatedHours: '',
+          tags: [],
+          reminders: [],
+          attachments: []
+        });
+
+        // Navegar a la página de actividades
+        navigate('/actividades');
+        
+      } catch (error) {
+        console.error('Error al crear actividad:', error);
+        alert(`Error al crear la actividad: ${error.message}`);
+      }
     }
   };
 
@@ -302,15 +329,21 @@ const CrearActividad = () => {
                     </span>
                   ))}
                 </div>
-                <form onSubmit={handleAddTag} className="add-tag-form">
+                <div className="add-tag-form">
                   <input
                     type="text"
                     value={newTag}
                     onChange={(e) => setNewTag(e.target.value)}
                     placeholder="Agregar etiqueta..."
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddTag(e);
+                      }
+                    }}
                   />
-                  <button type="submit">+</button>
-                </form>
+                  <button type="button" onClick={handleAddTag}>+</button>
+                </div>
               </div>
             </div>
           </div>
@@ -335,11 +368,11 @@ const CrearActividad = () => {
             <button type="button" onClick={handleDraft} className="draft-btn">
               💾 Guardar Borrador
             </button>
-            <button type="button" className="cancel-btn">
+            <button type="button" className="cancel-btn" onClick={() => navigate('/actividades')}>
               ❌ Cancelar
             </button>
-            <button type="submit" className="submit-btn">
-              ✅ Crear Actividad
+            <button type="submit" className="submit-btn" disabled={isCreating}>
+              {isCreating ? '⏳ Creando...' : '✅ Crear Actividad'}
             </button>
           </div>
         </form>

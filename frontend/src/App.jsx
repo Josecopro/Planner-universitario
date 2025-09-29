@@ -12,6 +12,7 @@ import {
   Configuracion
 } from './pages';
 import './App.css';
+import './styles/api-states.css';
 
 function App() {
   const renderPage = (Component, { showNavigation = true } = {}) => (
