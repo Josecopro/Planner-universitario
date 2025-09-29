@@ -1,0 +1,281 @@
+// Block: nav-bar
+.nav-bar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+    top: 0;
+    left: 0;
+	gap: 2rem;
+	padding: 1rem 1.75rem;
+	background: var(--primary-color);
+	color: white;
+	box-shadow: 0 7px 15px rgba(147, 36, 40, 0.25);
+    position: sticky;
+    width: inherit;
+    z-index: 1000;
+
+	// Element: current
+	&__current {
+		display: flex;
+		align-items: center;
+		gap: 1rem;
+	}
+
+	// Element: current-icon
+	&__current-icon {
+		width: 48px;
+		height: 48px;
+		border-radius: 14px;
+		background: rgba(255, 255, 255, 0.15);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 1.75rem;
+	}
+
+	// Element: current-info
+	&__current-info {
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
+	}
+
+	// Element: subtitle
+	&__subtitle {
+		font-size: 0.75rem;
+		font-weight: 500;
+		text-transform: uppercase;
+		letter-spacing: 0.08em;
+		color: rgba(255, 255, 255, 0.7);
+	}
+
+	// Element: title
+	&__title {
+		margin: 0;
+		font-size: 1.75rem;
+		font-weight: 700;
+		line-height: 1.2;
+		color: inherit;
+	}
+
+	// Element: details
+	&__details {
+		display: flex;
+		align-items: center;
+		gap: 1.5rem;
+		margin-left: auto;
+	}
+
+	// Element: breadcrumbs
+	&__breadcrumbs {
+		display: flex;
+		align-items: center;
+	}
+
+	// Element: breadcrumb-list
+	&__breadcrumb-list {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	// Element: breadcrumb-item
+	&__breadcrumb-item {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		font-size: 0.85rem;
+	}
+
+	// Element: breadcrumb-link
+	&__breadcrumb-link {
+		color: rgba(255, 255, 255, 0.85);
+		text-decoration: none;
+		transition: color 0.2s ease;
+
+		&:hover,
+		&:focus {
+			color: white;
+			text-decoration: underline;
+		}
+	}
+
+	// Element: breadcrumb-separator
+	&__breadcrumb-separator {
+		color: rgba(255, 255, 255, 0.4);
+		font-weight: 600;
+	}
+
+	// Element: profile
+	&__profile {
+		position: relative;
+	}
+
+	// Element: profile-trigger
+	&__profile-trigger {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		padding: 0.5rem 0.75rem;
+		border-radius: 12px;
+		border: 1px solid rgba(255, 255, 255, 0.15);
+		background: rgba(255, 255, 255, 0.1);
+		color: inherit;
+		cursor: pointer;
+		transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+
+		&:hover,
+		&:focus {
+			background: rgba(255, 255, 255, 0.18);
+			border-color: rgba(255, 255, 255, 0.3);
+			transform: translateY(-1px);
+		}
+	}
+
+	// Element: avatar
+	&__avatar {
+		width: 40px;
+		height: 40px;
+		border-radius: 12px;
+		background: rgba(255, 255, 255, 0.22);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-weight: 700;
+		font-size: 1rem;
+		color: white;
+	}
+
+	// Element: profile-info
+	&__profile-info {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		line-height: 1.2;
+	}
+
+	// Element: profile-name
+	&__profile-name {
+		font-weight: 600;
+		font-size: 0.95rem;
+	}
+
+	// Element: profile-role
+	&__profile-role {
+		font-size: 0.75rem;
+		color: rgba(255, 255, 255, 0.75);
+	}
+
+	// Element: profile-icon
+	&__profile-icon {
+		font-size: 0.7rem;
+		margin-left: 0.5rem;
+	}
+
+	// Element: menu
+	&__menu {
+		position: absolute;
+		top: calc(100% + 0.75rem);
+		right: 0;
+		background: white;
+		color: #1a202c;
+		min-width: 220px;
+		border-radius: 12px;
+		box-shadow: 0 20px 45px rgba(15, 23, 42, 0.18);
+		padding: 0.5rem 0;
+		opacity: 0;
+		transform: translateY(-10px);
+		pointer-events: none;
+		transition: opacity 0.2s ease, transform 0.2s ease;
+		z-index: 15;
+	}
+
+	// Modifier: menu open
+	&__menu--open {
+		opacity: 1;
+		transform: translateY(0);
+		pointer-events: auto;
+	}
+
+	// Element: menu-item
+	&__menu-item {
+		width: 100%;
+		background: transparent;
+		border: none;
+		text-align: left;
+		padding: 0.75rem 1.25rem;
+		font-size: 0.9rem;
+		font-weight: 500;
+		color: inherit;
+		cursor: pointer;
+		transition: background 0.2s ease, color 0.2s ease, padding-left 0.2s ease;
+
+		&:hover,
+		&:focus {
+			background: rgba(147, 36, 40, 0.08);
+			color: var(--primary-color);
+			padding-left: 1.5rem;
+		}
+	}
+
+	// Modifier: menu-item danger
+	&__menu-item--danger {
+		color: #b91c1c;
+
+		&:hover,
+		&:focus {
+			background: rgba(220, 38, 38, 0.12);
+			color: #7f1d1d;
+		}
+	}
+
+	@media (max-width: 1024px) {
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 1.5rem;
+		padding: 1rem 1.25rem;
+
+		&__details {
+			width: 100%;
+			justify-content: space-between;
+		}
+	}
+
+	@media (max-width: 768px) {
+		border-radius: 12px;
+
+		&__details {
+			flex-direction: column;
+			align-items: flex-start;
+			gap: 1rem;
+		}
+
+		&__profile-trigger {
+			width: 100%;
+			justify-content: space-between;
+		}
+
+		&__breadcrumbs {
+			width: 100%;
+		}
+
+		&__breadcrumb-list {
+			flex-wrap: wrap;
+			gap: 0.5rem;
+		}
+	}
+
+	@media (max-width: 480px) {
+		&__current {
+			width: 100%;
+			justify-content: space-between;
+		}
+
+		&__title {
+			font-size: 1.5rem;
+		}
+	}
+}

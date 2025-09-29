@@ -13,16 +13,42 @@
   transition: margin-left 0.3s ease;
 }
 
+/* Modifier: main-content without navigation */
+.app__main-content--no-nav {
+  margin-left: 0;
+}
+
+/* Element: main-wrapper */
+.app__main-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Element: page-wrapper */
+.app__page-wrapper {
+  flex: 1;
+  min-height: 0;
+}
+
 /* Responsive design */
 @media (max-width: 1024px) {
   .app__main-content {
     margin-left: 70px;
+  }
+
+  .app__main-wrapper {
+    padding: 1.5rem;
   }
 }
 
 @media (max-width: 768px) {
   .app__main-content {
     margin-left: 0;
+  }
+
+  .app__main-wrapper {
+    padding: 1.25rem;
   }
 }
 

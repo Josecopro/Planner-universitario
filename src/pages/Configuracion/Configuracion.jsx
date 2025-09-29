@@ -4,9 +4,9 @@ import './Configuracion.scss';
 const Configuracion = () => {
   // Estado para los datos del perfil
   const [profileData, setProfileData] = useState({
-    name: 'María González',
-    email: 'maria.gonzalez@udemedellin.edu.co',
-    role: 'Profesor'
+    name: 'Laura Mejía',
+    email: 'Laura.Mejia@udemedellin.edu.co',
+    role: 'Coordinadora académica'
   });
 
   // Estado para las preferencias de notificaciones
@@ -90,6 +90,7 @@ const Configuracion = () => {
                   <option value="Profesor">Profesor</option>
                   <option value="Estudiante">Estudiante</option>
                   <option value="Administrativo">Administrativo</option>
+                  <option value="Coordinadora académica">Coordinadora académica</option>
                 </select>
               </div>
 

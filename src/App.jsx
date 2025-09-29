@@ -1,6 +1,7 @@
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Link } from 'react-router-dom';
 import Navigation from './components/Navigation/Navigation';
+import NavBar from './components/NavBar';
 import {
   Inicio,
   Dashboard,
@@ -13,25 +14,20 @@ import {
 import './App.css';
 
 function App() {
-  const pagesWithoutNav = [
-    { path: '/', component: Inicio },
-    { path: '*', component: NotFound }
-  ];
-
-  const pagesWithNav = [
-    { path: '/dashboard', component: Dashboard },
-    { path: '/estudiantes', component: Estudiantes },
-    { path: '/actividades', component: Actividades },
-    { path: '/crear-actividad', component: CrearActividad },
-    { path: '/chat', component: Chat },
-    { path: '/configuracion', component: Configuracion }
-  ];
-
-  const createRouteWithNav = (Component) => (
+  const renderPage = (Component, { showNavigation = true } = {}) => (
     <>
-      <Navigation />
-      <main className="app__main-content">
-        <Component />
+      {showNavigation && <Navigation />}
+      <main
+        className={`app__main-content ${
+          showNavigation ? '' : 'app__main-content--no-nav'
+        }`}
+      >
+        <div className="app__main-wrapper">
+          <NavBar />
+          <div className="app__page-wrapper">
+            <Component />
+          </div>
+        </div>
       </main>
     </>
   );
@@ -39,13 +35,14 @@ function App() {
   return (
     <div className="app">
       <Routes>
-        {pagesWithoutNav.map(({ path, component: Component }) => (
-          <Route key={path} path={path} element={<Component />} />
-        ))}
-        
-        {pagesWithNav.map(({ path, component: Component }) => (
-          <Route key={path} path={path} element={createRouteWithNav(Component)} />
-        ))}
+        <Route path="/" element={renderPage(Inicio, { showNavigation: false })} />
+        <Route path="/dashboard" element={renderPage(Dashboard)} />
+        <Route path="/estudiantes" element={renderPage(Estudiantes)} />
+        <Route path="/actividades" element={renderPage(Actividades)} />
+        <Route path="/crear-actividad" element={renderPage(CrearActividad)} />
+        <Route path="/chat" element={renderPage(Chat)} />
+        <Route path="/configuracion" element={renderPage(Configuracion)} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </div>
   );
@@ -68,8 +65,8 @@ const NotFound = () => (
     <p style={{ color: '#718096', marginBottom: '2rem' }}>
       La página que buscas no existe o ha sido movida.
     </p>
-    <a 
-      href="#/" 
+    <Link 
+      to="/" 
       style={{
         background: '#932428',
         color: 'white',
@@ -80,7 +77,7 @@ const NotFound = () => (
       }}
     >
       Volver al Inicio
-    </a>
+    </Link>
   </div>
 );
 
