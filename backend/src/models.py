@@ -26,10 +26,20 @@ class CategoryEnum(str, Enum):
     ensayo = "ensayo"
     investigacion = "investigacion"
 
+
+
+#Modelo para Profesor General
+
+class Profesor(BaseModel):
+    idProfesor: int
+    nombre: str
+    correo: EmailStr
+    avatar:str
+
 # Modelos para Estudiantes
 class StudentBase(BaseModel):
-    name: str
-    email: EmailStr
+    nombre: str
+    correo: EmailStr
     career: str
     semester: int
     status: StatusEnum = StatusEnum.active
@@ -38,7 +48,8 @@ class StudentCreate(StudentBase):
     pass
 
 class Student(StudentBase):
-    id: int
+    idEstudiante: int
+    notaPromedio: float
     avatar: str
 
     class Config:
