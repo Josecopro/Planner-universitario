@@ -10,10 +10,7 @@ const Estudiantes = () => {
 
   const { mutate, loading: mutationLoading } = useMutation();
 
-  // Asegurar que students sea un array antes de usar filter
   const studentsArray = students || [];
-  
-  console.log('Estudiantes Component:', { students, loading, error });
   
   const filteredStudents = studentsArray.filter(student => {
     const matchesSearch = student.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -29,7 +26,7 @@ const Estudiantes = () => {
     if (window.confirm(`¿Estás seguro de que quieres eliminar a ${name}?`)) {
       try {
         await mutate(() => studentsApi.delete(id));
-        await refetch(); // Actualizar la lista
+        await refetch();
         alert('Estudiante eliminado correctamente');
       } catch (error) {
         alert(`Error al eliminar estudiante: ${error.message}`);
