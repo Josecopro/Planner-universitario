@@ -4,6 +4,22 @@ Lógica de negocio para gestión de actividades evaluativas (tareas, exámenes, 
 """
 from typing import Optional, List, Dict, Any
 from datetime import datetime
+from decimal import Decimal
+from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy import func
+
+from models.actividad_evaluativa import (
+    ActividadEvaluativa,
+    EstadoActividad,
+    TipoActividad,
+    PrioridadActividad
+)
+from models.grupo import Grupo
+from utils.datetime_utils import obtener_datetime_actual, es_fecha_pasada
+from utils.validators import validar_porcentaje, validar_tipo_actividad, validar_prioridad
+from typing import Optional, List, Dict, Any
+from datetime import datetime
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import and_, or_
 
@@ -48,7 +64,7 @@ def crear_actividad(
         raise ValueError(f"Grupo con ID {grupo_id} no encontrado")
     
     porcentaje = datos_actividad.get("porcentaje", 0.0)
-    if porcentaje < 0.0 or porcentaje > 100.0:  # type: ignore
+    if not validar_porcentaje(porcentaje):
         raise ValueError("El porcentaje debe estar entre 0.0 y 100.0")
     
     nueva_actividad = ActividadEvaluativa(
@@ -146,7 +162,7 @@ def actualizar_actividad(
     
     if "porcentaje" in datos_actualizacion:
         porcentaje = datos_actualizacion["porcentaje"]
-        if porcentaje < 0.0 or porcentaje > 100.0:  # type: ignore
+        if not validar_porcentaje(porcentaje):
             raise ValueError("El porcentaje debe estar entre 0.0 y 100.0")
     
     campos_permitidos = [
@@ -303,7 +319,7 @@ def obtener_actividades_proximas(
     """
     from datetime import timedelta
     
-    fecha_actual = datetime.now()
+    fecha_actual = obtener_datetime_actual()
     fecha_limite = fecha_actual + timedelta(days=dias)
     
     estados_activos = [
@@ -417,7 +433,7 @@ def actividad_esta_vencida(
     if not actividad:
         return False
     
-    return actividad.fecha_entrega < datetime.now()  # type: ignore
+    return es_fecha_pasada(actividad.fecha_entrega)  # type: ignore
 
 
 def obtener_actividades_por_prioridad(
@@ -501,7 +517,7 @@ def obtener_estadisticas_actividad(
     if estudiantes_inscritos > 0:
         porcentaje_entrega = (total_entregas / estudiantes_inscritos) * 100
     
-    esta_vencida = actividad.fecha_entrega < datetime.now()  # type: ignore
+    esta_vencida = es_fecha_pasada(actividad.fecha_entrega)  # type: ignore
     
     return {
         "actividad": actividad,

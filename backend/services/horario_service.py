@@ -9,6 +9,8 @@ from sqlalchemy import and_, or_
 
 from models.horario import Horario
 from models.grupo import Grupo
+from utils.validators import validar_dia_semana, validar_rango_tiempo, validar_duracion_horario
+from utils.datetime_utils import calcular_duracion_minutos
 
 
 def obtener_horarios_por_grupo(
@@ -265,21 +267,23 @@ def horario_es_valido(
         >>> if not valido:
         ...     print(msg)
     """
-    if hora_fin <= hora_inicio:
-        return False, "La hora de fin debe ser posterior a la hora de inicio"
+    hora_min = time(6, 0)
+    hora_max = time(22, 0)
     
-    if hora_inicio.hour < 6 or hora_inicio.hour >= 22:
-        return False, "La hora de inicio debe estar entre 6:00 AM y 10:00 PM"
+    if not validar_rango_tiempo(hora_inicio, hora_fin, hora_min, hora_max):
+        if hora_fin <= hora_inicio:
+            return False, "La hora de fin debe ser posterior a la hora de inicio"
+        elif hora_inicio < hora_min or hora_fin > hora_max:
+            return False, "El horario debe estar entre 6:00 AM y 10:00 PM"
+        return False, "Rango de tiempo inválido"
     
-    if hora_fin.hour < 6 or hora_fin.hour > 22:
-        return False, "La hora de fin debe estar entre 6:00 AM y 10:00 PM"
-    
-    duracion_horas = (hora_fin.hour * 60 + hora_fin.minute) - (hora_inicio.hour * 60 + hora_inicio.minute)
-    if duracion_horas > 240:
-        return False, "La duración de una clase no puede exceder 4 horas"
-    
-    if duracion_horas < 30:
-        return False, "La duración de una clase debe ser al menos 30 minutos"
+    if not validar_duracion_horario(hora_inicio, hora_fin, min_minutos=30, max_minutos=240):
+        duracion = calcular_duracion_minutos(hora_inicio, hora_fin)
+        if duracion > 240:
+            return False, "La duración de una clase no puede exceder 4 horas"
+        elif duracion < 30:
+            return False, "La duración de una clase debe ser al menos 30 minutos"
+        return False, "Duración inválida"
     
     return True, "Horario válido"
 
@@ -318,6 +322,11 @@ def crear_horario(
     grupo = db.query(Grupo).filter(Grupo.id == datos_horario["grupo_id"]).first()
     if not grupo:
         raise ValueError(f"El grupo con ID {datos_horario['grupo_id']} no existe")
+    
+    if not validar_dia_semana(datos_horario["dia"]):
+        raise ValueError(
+            f"Día '{datos_horario['dia']}' no es válido. Use: Lunes, Martes, Miércoles, Jueves, Viernes, Sábado, Domingo"
+        )
     
     valido, mensaje = horario_es_valido(
         datos_horario["hora_inicio"],

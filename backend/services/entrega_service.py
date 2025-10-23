@@ -11,6 +11,7 @@ from sqlalchemy.exc import IntegrityError
 from models.entrega import Entrega, EstadoEntrega
 from models.actividad_evaluativa import ActividadEvaluativa, EstadoActividad
 from models.inscripcion import Inscripcion
+from utils.datetime_utils import obtener_datetime_actual, es_entrega_tardia
 
 
 def realizar_entrega(
@@ -68,9 +69,9 @@ def realizar_entrega(
             f"Ya existe una entrega para esta actividad por parte del estudiante"
         )
     
-    fecha_entrega = datos_entrega.get("fecha_entrega", datetime.now())
+    fecha_entrega = datos_entrega.get("fecha_entrega", obtener_datetime_actual())
     
-    if fecha_entrega > actividad.fecha_entrega:  # type: ignore
+    if es_entrega_tardia(fecha_entrega, actividad.fecha_entrega):  # type: ignore
         estado = EstadoEntrega.ENTREGADA_TARDE
     else:
         estado = EstadoEntrega.ENTREGADA

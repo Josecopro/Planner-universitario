@@ -12,6 +12,7 @@ from models.grupo import Grupo, EstadoGrupo
 from models.curso import Curso
 from models.profesor import Profesor
 from models.horario import Horario
+from utils.validators import validar_cupo, validar_semestre
 
 
 def crear_grupo(
@@ -53,6 +54,12 @@ def crear_grupo(
     if not datos_grupo.get("cupo_maximo"):
         raise ValueError("El cupo_maximo es requerido")
     
+    if not validar_semestre(datos_grupo["semestre"]):
+        raise ValueError("Formato de semestre inválido. Use formato YYYY-N (ej: 2025-1, 2024-2)")
+    
+    if not validar_cupo(datos_grupo["cupo_maximo"], minimo=1, maximo=100):
+        raise ValueError("El cupo_maximo debe estar entre 1 y 100")
+    
     curso = db.query(Curso).filter(Curso.id == datos_grupo["curso_id"]).first()
     if not curso:
         raise ValueError(f"El curso con ID {datos_grupo['curso_id']} no existe")
@@ -65,9 +72,6 @@ def crear_grupo(
             raise ValueError(
                 f"El profesor con ID {datos_grupo['profesor_id']} no existe"
             )
-    
-    if datos_grupo["cupo_maximo"] <= 0:
-        raise ValueError("El cupo_maximo debe ser mayor a 0")
     
     nuevo_grupo = Grupo(
         curso_id=datos_grupo["curso_id"],

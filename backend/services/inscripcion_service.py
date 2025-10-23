@@ -11,6 +11,8 @@ from sqlalchemy.exc import IntegrityError
 from models.inscripcion import Inscripcion, EstadoInscripcion
 from models.estudiante import Estudiante
 from models.grupo import Grupo, EstadoGrupo
+from utils.datetime_utils import obtener_datetime_actual
+from utils.validators import validar_estado_inscripcion
 
 
 def inscribir_estudiante(
@@ -77,7 +79,7 @@ def inscribir_estudiante(
     nueva_inscripcion = Inscripcion(
         estudiante_id=estudiante_id,
         grupo_id=grupo_id,
-        fecha_inscripcion=datos_inscripcion.get("fecha_inscripcion", datetime.now()),
+        fecha_inscripcion=datos_inscripcion.get("fecha_inscripcion", obtener_datetime_actual()),
         estado=EstadoInscripcion.INSCRITO
     )
     

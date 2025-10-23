@@ -11,6 +11,7 @@ from sqlalchemy import and_, or_, func
 from models.curso import Curso, EstadoCurso
 from models.facultad import Facultad
 from models.grupo import Grupo
+from utils.validators import validar_codigo
 
 
 def crear_curso(
@@ -47,6 +48,9 @@ def crear_curso(
         raise ValueError("El nombre del curso es requerido")
     if not datos_curso.get("facultad_id"):
         raise ValueError("El facultad_id es requerido")
+    
+    if not validar_codigo(datos_curso["codigo"]):
+        raise ValueError("Formato de código inválido. Use solo letras, números y guiones (ej: IS-101, MAT-201)")
     
     curso_existente = db.query(Curso).filter(
         Curso.codigo == datos_curso["codigo"]

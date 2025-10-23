@@ -1,7 +1,20 @@
 """
 Servicio de Calificación
-Lógica de negocio para gestión de calificaciones de entregas
+Lógica de negocio para gestión de calificaciones y cálculo de promedios
 """
+from typing import Optional, List, Dict, Any
+from datetime import datetime
+from decimal import Decimal
+from sqlalchemy.orm import Session, joinedload
+from sqlalchemy import and_
+from sqlalchemy.exc import IntegrityError
+
+from models.calificacion import Calificacion
+from models.entrega import Entrega
+from models.actividad_evaluativa import ActividadEvaluativa
+from models.inscripcion import Inscripcion
+from utils.datetime_utils import obtener_datetime_actual
+from utils.validators import validar_nota
 from typing import Optional, List, Dict, Any
 from datetime import datetime
 from sqlalchemy.orm import Session, joinedload
@@ -62,7 +75,7 @@ def crear_calificacion(
         entrega_id=entrega_id,
         nota_obtenida=nota_obtenida,
         retroalimentacion=datos_calificacion.get("retroalimentacion"),
-        fecha_calificacion=datos_calificacion.get("fecha_calificacion", datetime.now())
+        fecha_calificacion=datos_calificacion.get("fecha_calificacion", obtener_datetime_actual())
     )
     
     try:
