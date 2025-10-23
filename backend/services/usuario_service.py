@@ -17,7 +17,7 @@ from core.security import (
     sanitize_email
 )
 
-# CRUB Básico
+# CRUD Básico
 
 def crear_usuario(db: Session, datos_usuario: dict) -> Usuario:
     """

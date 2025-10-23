@@ -11,8 +11,10 @@ Son independientes de HTTP y se encargan de:
 
 from services import usuario_service
 from services import profesor_service
+from services import estudiante_service
 
 __all__ = [
     "usuario_service",
     "profesor_service",
+    "estudiante_service",
 ]

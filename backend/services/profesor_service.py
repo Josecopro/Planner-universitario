@@ -32,10 +32,6 @@ def crear_perfil_profesor(
             - tipo_documento (str, opcional): Tipo de documento
             - facultad_id (int, opcional): ID de la facultad
             - titulo_academico (str, opcional): Título académico
-            - biografia (str, opcional): Biografía del profesor
-            - area_especialidad (str, opcional): Área de especialidad
-            - años_experiencia (int, opcional): Años de experiencia
-            - calificacion_promedio (Decimal, opcional): Calificación promedio
     
     Returns:
         Profesor: El perfil de profesor creado
@@ -50,8 +46,7 @@ def crear_perfil_profesor(
         ...     "documento": "1234567890",
         ...     "tipo_documento": "Cédula",
         ...     "facultad_id": 2,
-        ...     "titulo_academico": "PhD en Ingeniería de Software",
-        ...     "area_especialidad": "Arquitectura de Software"
+        ...     "titulo_academico": "PhD en Ingeniería de Software"
         ... })
     """
     usuario_id = datos_profesor.get("usuario_id")
@@ -80,11 +75,7 @@ def crear_perfil_profesor(
         documento=datos_profesor.get("documento"),
         tipo_documento=datos_profesor.get("tipo_documento"),
         facultad_id=facultad_id,
-        titulo_academico=datos_profesor.get("titulo_academico"),
-        biografia=datos_profesor.get("biografia"),
-        area_especialidad=datos_profesor.get("area_especialidad"),
-        años_experiencia=datos_profesor.get("años_experiencia"),
-        calificacion_promedio=datos_profesor.get("calificacion_promedio")
+        titulo_academico=datos_profesor.get("titulo_academico")
     )
     
     db.add(nuevo_profesor)
@@ -237,8 +228,7 @@ def actualizar_profesor(
     
     Example:
         >>> profesor = actualizar_profesor(db, 1, {
-        ...     "titulo_academico": "PhD en Computer Science",
-        ...     "area_especialidad": "Machine Learning"
+        ...     "titulo_academico": "PhD en Computer Science"
         ... })
     """
     profesor = obtener_profesor_por_id(db, profesor_id)
@@ -258,11 +248,7 @@ def actualizar_profesor(
         "documento",
         "tipo_documento",
         "facultad_id",
-        "titulo_academico",
-        "biografia",
-        "area_especialidad",
-        "años_experiencia",
-        "calificacion_promedio"
+        "titulo_academico"
     ]
     
     for campo, valor in datos_actualizados.items():
@@ -375,9 +361,8 @@ def actualizar_datos_profesor(
     """
     Actualiza solo los datos específicos del profesor (no del usuario).
     
-    Esta función permite actualizar campos como título académico, biografía,
-    área de especialidad, etc., pero NO modifica datos del usuario asociado
-    (nombre, email, etc.).
+    Esta función permite actualizar campos como título académico,
+    pero NO modifica datos del usuario asociado (nombre, email, etc.).
     
     Args:
         db: Sesión de base de datos
@@ -392,9 +377,7 @@ def actualizar_datos_profesor(
     
     Example:
         >>> profesor = actualizar_datos_profesor(db, 1, {
-        ...     "biografia": "Profesor con 15 años de experiencia...",
-        ...     "area_especialidad": "Inteligencia Artificial",
-        ...     "años_experiencia": 15
+        ...     "titulo_academico": "PhD en Inteligencia Artificial"
         ... })
     """
     return actualizar_profesor(db, profesor_id, datos_actualizacion)
@@ -547,7 +530,6 @@ def obtener_estadisticas_profesor(
         - total_grupos_dictados: Total histórico de grupos
         - grupos_activos: Grupos actuales
         - total_estudiantes_actuales: Estudiantes en grupos activos
-        - calificacion_promedio: Calificación del profesor
         - semestres_activo: Cantidad de semestres en que ha dictado
     
     Example:
@@ -584,15 +566,10 @@ def obtener_estadisticas_profesor(
         Grupo.profesor_id == profesor_id
     ).scalar()
     
-    # Obtener calificación promedio del modelo
-    profesor = obtener_profesor_por_id(db, profesor_id)
-    calificacion = getattr(profesor, 'calificacion_promedio', None) if profesor else None
-    
     return {
         "total_grupos_dictados": total_grupos or 0,
         "grupos_activos": grupos_activos or 0,
         "total_estudiantes_actuales": estudiantes_actuales or 0,
-        "calificacion_promedio": float(calificacion) if calificacion else None,
         "semestres_activo": semestres or 0
     }
 
