@@ -13,17 +13,12 @@ import enum
 
 from db.base import Base
 
-
-# =================================================================
-#  ENUMS
-# =================================================================
-
 class EstadoActividad(str, enum.Enum):
     """Estado de una actividad evaluativa"""
-    PROGRAMADA = "Programada"  # Creada por el profesor, no visible aún
-    PUBLICADA = "Publicada"    # Visible para estudiantes, no acepta entregas
-    ABIERTA = "Abierta"        # Aceptando entregas
-    CERRADA = "Cerrada"        # Fecha de entrega pasada
+    PROGRAMADA = "Programada"
+    PUBLICADA = "Publicada"
+    ABIERTA = "Abierta"
+    CERRADA = "Cerrada"
     CANCELADA = "Cancelada"
 
 
@@ -44,10 +39,6 @@ class PrioridadActividad(str, enum.Enum):
     MEDIA = "Media"
     ALTA = "Alta"
 
-
-# =================================================================
-#  MODELO
-# =================================================================
 
 class ActividadEvaluativa(Base):
     """
