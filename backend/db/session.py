@@ -7,7 +7,7 @@ from sqlalchemy.pool import NullPool
 from typing import Generator
 import logging
 
-from backend.core.config import settings
+from core.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -60,7 +60,7 @@ def init_db() -> None:
     - Ejecutar migraciones
     - Cargar datos iniciales
     """
-    from backend.db.base import Base
+    from db.base import Base
     
     try:
         Base.metadata.create_all(bind=engine)

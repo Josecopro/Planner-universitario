@@ -4,7 +4,6 @@ Define la forma de los datos que entran y salen de la API.
 """
 from pydantic import BaseModel, Field, ConfigDict
 from datetime import datetime
-from decimal import Decimal
 from typing import Optional
 
 
@@ -13,10 +12,9 @@ class CalificacionBase(BaseModel):
     Schema base con los campos comunes de Calificación.
     Otros schemas heredan de este.
     """
-    nota_obtenida: Decimal = Field(
+    nota_obtenida: float = Field(
         ...,
         ge=0.0,
-        decimal_places=2,
         description="Nota obtenida por el estudiante (debe ser >= 0)"
     )
     retroalimentacion: Optional[str] = Field(
@@ -51,10 +49,9 @@ class CalificacionUpdate(BaseModel):
     
     Usado en: PUT/PATCH /api/v1/calificaciones/{id}
     """
-    nota_obtenida: Optional[Decimal] = Field(
+    nota_obtenida: Optional[float] = Field(
         None,
         ge=0.0,
-        decimal_places=2,
         description="Nueva nota"
     )
     retroalimentacion: Optional[str] = Field(
@@ -115,7 +112,7 @@ class CalificacionConDetalles(CalificacionPublic):
     """
     actividad_titulo: str = Field(..., description="Título de la actividad evaluativa")
     actividad_tipo: str = Field(..., description="Tipo de actividad")
-    actividad_porcentaje: Decimal = Field(..., description="Porcentaje de la actividad")
+    actividad_porcentaje: float = Field(..., description="Porcentaje de la actividad")
     
     estudiante_nombre: str = Field(..., description="Nombre completo del estudiante")
     estudiante_documento: Optional[str] = Field(None, description="Documento del estudiante")
@@ -144,7 +141,7 @@ class CalificacionItem(BaseModel):
     Schema para un item de calificación en calificación masiva.
     """
     entrega_id: int = Field(..., gt=0, description="ID de la entrega")
-    nota_obtenida: Decimal = Field(..., ge=0.0, decimal_places=2, description="Nota")
+    nota_obtenida: float = Field(..., ge=0.0, description="Nota")
     retroalimentacion: Optional[str] = Field(None, description="Feedback opcional")
 
 
@@ -225,9 +222,9 @@ class CalificacionEstadisticas(BaseModel):
     total_entregas: int = Field(..., description="Total de entregas")
     total_calificadas: int = Field(..., description="Entregas ya calificadas")
     pendientes: int = Field(..., description="Entregas pendientes de calificar")
-    nota_promedio: Optional[Decimal] = Field(None, description="Promedio de notas")
-    nota_maxima: Optional[Decimal] = Field(None, description="Nota más alta")
-    nota_minima: Optional[Decimal] = Field(None, description="Nota más baja")
+    nota_promedio: Optional[float] = Field(None, description="Promedio de notas")
+    nota_maxima: Optional[float] = Field(None, description="Nota más alta")
+    nota_minima: Optional[float] = Field(None, description="Nota más baja")
     
     model_config = ConfigDict(
         json_schema_extra={
@@ -256,8 +253,8 @@ class CalificacionResumenEstudiante(BaseModel):
     total_actividades: int = Field(..., description="Total de actividades del grupo")
     actividades_calificadas: int = Field(..., description="Actividades ya calificadas")
     actividades_pendientes: int = Field(..., description="Actividades sin calificar")
-    nota_acumulada: Decimal = Field(..., description="Suma ponderada de notas")
-    porcentaje_completado: Decimal = Field(..., description="Porcentaje del curso calificado")
+    nota_acumulada: float = Field(..., description="Suma ponderada de notas")
+    porcentaje_completado: float = Field(..., description="Porcentaje del curso calificado")
     
     model_config = ConfigDict(
         json_schema_extra={

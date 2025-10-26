@@ -4,7 +4,6 @@ Define la forma de los datos que entran y salen de la API.
 """
 from pydantic import BaseModel, Field, ConfigDict
 from datetime import datetime
-from decimal import Decimal
 from typing import Optional
 
 from models.actividad_evaluativa import (
@@ -23,7 +22,7 @@ class ActividadEvaluativaBase(BaseModel):
     descripcion: Optional[str] = Field(None, description="Descripción detallada de la actividad")
     tipo: TipoActividad = Field(default=TipoActividad.TAREA, description="Tipo de actividad")
     prioridad: PrioridadActividad = Field(default=PrioridadActividad.MEDIA, description="Prioridad de la actividad")
-    porcentaje: Decimal = Field(..., ge=0.0, le=100.0, decimal_places=2, description="Porcentaje en la nota final (0-100)")
+    porcentaje: float = Field(..., ge=0.0, le=100.0, description="Porcentaje en la nota final (0-100)")
     fecha_entrega: datetime = Field(..., description="Fecha y hora límite para la entrega")
 
 
@@ -61,7 +60,7 @@ class ActividadEvaluativaUpdate(BaseModel):
     estado: Optional[EstadoActividad] = None
     tipo: Optional[TipoActividad] = None
     prioridad: Optional[PrioridadActividad] = None
-    porcentaje: Optional[Decimal] = Field(None, ge=0.0, le=100.0, decimal_places=2)
+    porcentaje: Optional[float] = Field(None, ge=0.0, le=100.0)
     fecha_entrega: Optional[datetime] = None
     
     model_config = ConfigDict(
@@ -127,7 +126,7 @@ class ActividadEvaluativaList(BaseModel):
     tipo: TipoActividad
     prioridad: PrioridadActividad
     estado: EstadoActividad
-    porcentaje: Decimal
+    porcentaje: float
     fecha_entrega: datetime
     
     model_config = ConfigDict(from_attributes=True)
