@@ -1,6 +1,5 @@
 """
 Endpoints para Estudiantes
-===========================
 
 Gestiona los perfiles de estudiantes, consultas académicas y estadísticas.
 """
