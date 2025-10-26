@@ -28,24 +28,12 @@ from api.v1.endpoints import (
 api_router = APIRouter()
 
 
-api_router.include_router(
-    auth.router,
-    prefix="/auth",
-    tags=["Autenticación"]
-)
+api_router.include_router(auth.router)
 
 
-api_router.include_router(
-    usuarios.router,
-    prefix="/usuarios",
-    tags=["Usuarios"]
-)
+api_router.include_router(usuarios.router)
 
-api_router.include_router(
-    roles.router,
-    prefix="/roles",
-    tags=["Roles"]
-)
+api_router.include_router(roles.router)
 
 
 api_router.include_router(
@@ -54,11 +42,7 @@ api_router.include_router(
     tags=["Facultades"]
 )
 
-api_router.include_router(
-    programas_academicos.router,
-    prefix="/programas-academicos",
-    tags=["Programas Académicos"]
-)
+api_router.include_router(programas_academicos.router)
 
 api_router.include_router(
     cursos.router,
