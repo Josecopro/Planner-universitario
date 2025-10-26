@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 
 from db.session import get_db
+from core.security import get_current_superadmin
 from schemas.programa_academico import (
     ProgramaAcademicoCreate,
     ProgramaAcademicoUpdate,
@@ -25,19 +26,24 @@ router = APIRouter(prefix="/programas-academicos", tags=["programas-academicos"]
 @router.post("/", response_model=ProgramaAcademicoPublic, status_code=status.HTTP_201_CREATED)
 def crear_programa(
     programa: ProgramaAcademicoCreate,
+    current_user = Depends(get_current_superadmin),
     db: Session = Depends(get_db)
 ) -> Any:
     """
     Crea un nuevo programa académico.
     
+    **REQUIERE:** Rol de Superadmin
+    
     Args:
         programa: Datos del programa a crear
+        current_user: Usuario autenticado (Superadmin)
         db: Sesión de base de datos
     
     Returns:
         ProgramaAcademicoPublic: Programa creado
     
     Raises:
+        HTTPException 403: Si no es Superadmin
         HTTPException 400: Si la facultad no existe o el código ya está registrado
         HTTPException 500: Si ocurre un error al crear el programa
     """
@@ -399,20 +405,25 @@ def obtener_estadisticas(
 def actualizar_programa(
     programa_id: int,
     programa: ProgramaAcademicoUpdate,
+    current_user = Depends(get_current_superadmin),
     db: Session = Depends(get_db)
 ) -> Any:
     """
     Actualiza un programa académico existente.
     
+    **REQUIERE:** Rol de Superadmin
+    
     Args:
         programa_id: ID del programa a actualizar
         programa: Datos actualizados del programa
+        current_user: Usuario autenticado (Superadmin)
         db: Sesión de base de datos
     
     Returns:
         ProgramaAcademicoPublic: Programa actualizado
     
     Raises:
+        HTTPException 403: Si no es Superadmin
         HTTPException 404: Si el programa no existe
         HTTPException 400: Si el código ya está en uso
         HTTPException 500: Si ocurre un error al actualizar el programa
@@ -484,19 +495,25 @@ def cambiar_estado(
 @router.delete("/{programa_id}", status_code=status.HTTP_204_NO_CONTENT)
 def eliminar_programa(
     programa_id: int,
+    current_user = Depends(get_current_superadmin),
     db: Session = Depends(get_db)
 ) -> None:
     """
     Elimina un programa académico.
     
+    **REQUIERE:** Rol de Superadmin
+    **SEGURIDAD:** Solo el Superadmin puede eliminar programas académicos del sistema.
+    
     Args:
         programa_id: ID del programa a eliminar
+        current_user: Usuario autenticado (Superadmin)
         db: Sesión de base de datos
     
     Returns:
         None
     
     Raises:
+        HTTPException 403: Si no es Superadmin
         HTTPException 404: Si el programa no existe
         HTTPException 400: Si el programa tiene estudiantes registrados
         HTTPException 500: Si ocurre un error al eliminar el programa

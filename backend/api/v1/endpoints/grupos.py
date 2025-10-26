@@ -9,6 +9,8 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 
 from db.session import get_db
+from core.security import get_current_superadmin, get_current_profesor, require_roles
+from models.usuario import Usuario
 from schemas.grupo import (
     GrupoCreate,
     GrupoUpdate,
@@ -30,10 +32,14 @@ router = APIRouter()
 )
 def crear_grupo(
     grupo: GrupoCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(require_roles(["Superadmin", "Profesor"]))
 ):
     """
     Crea un nuevo grupo para un curso.
+    
+    **REQUIERE:** Rol de Superadmin o Profesor
+    **SEGURIDAD:** Solo Superadmin y Profesores pueden crear grupos
     
     **Parámetros:**
     - **curso_id**: ID del curso a dictar (requerido)
@@ -388,10 +394,14 @@ def verificar_inscripcion(
 def actualizar_grupo(
     grupo_id: int,
     datos_actualizados: GrupoUpdate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(require_roles(["Superadmin", "Profesor"]))
 ):
     """
     Actualiza los datos de un grupo.
+    
+    **REQUIERE:** Rol de Superadmin o Profesor
+    **SEGURIDAD:** Solo Superadmin y Profesores pueden actualizar grupos
     
     **Campos actualizables:**
     - **profesor_id**: Cambiar profesor asignado

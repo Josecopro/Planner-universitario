@@ -7,6 +7,8 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 
 from db.session import get_db
+from core.security import get_current_superadmin, require_roles
+from models.usuario import Usuario
 from schemas.actividad_evaluativa import (
     ActividadEvaluativaCreate,
     ActividadEvaluativaUpdate,
@@ -30,7 +32,8 @@ router = APIRouter()
 )
 def crear_actividad(
     actividad_data: ActividadEvaluativaCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(require_roles(["Superadmin", "Profesor"]))
 ):
     """
     Crea una nueva actividad evaluativa para un grupo.
@@ -307,7 +310,8 @@ def obtener_estadisticas(
 def actualizar_actividad(
     actividad_id: int,
     actividad_data: ActividadEvaluativaUpdate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(require_roles(["Superadmin", "Profesor"]))
 ):
     """
     Actualiza una actividad evaluativa existente.
@@ -356,7 +360,8 @@ def actualizar_actividad(
 def cambiar_estado(
     actividad_id: int,
     estado_data: ActividadEvaluativaEstadoUpdate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(require_roles(["Superadmin", "Profesor"]))
 ):
     """
     Cambia el estado de una actividad evaluativa.
@@ -404,7 +409,8 @@ def cambiar_estado(
 )
 def eliminar_actividad(
     actividad_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(get_current_superadmin)
 ):
     """
     Elimina una actividad evaluativa.

@@ -11,6 +11,8 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 
 from db.session import get_db
+from core.security import get_current_superadmin, require_roles
+from models.usuario import Usuario
 from schemas.horario import (
     HorarioCreate,
     HorarioUpdate,
@@ -30,7 +32,8 @@ router = APIRouter()
 )
 def crear_horario(
     horario: HorarioCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(require_roles(["Superadmin", "Profesor"]))
 ):
     """
     Crea un nuevo horario para un grupo.
@@ -377,7 +380,8 @@ def verificar_conflicto_profesor(
 def actualizar_horario(
     horario_id: int,
     datos_actualizados: HorarioUpdate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(require_roles(["Superadmin", "Profesor"]))
 ):
     """
     Actualiza un horario existente.
@@ -435,7 +439,8 @@ def actualizar_horario(
 )
 def eliminar_horario(
     horario_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(get_current_superadmin)
 ):
     """
     Elimina un horario.
@@ -463,7 +468,8 @@ def eliminar_horario(
 )
 def eliminar_horarios_grupo(
     grupo_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(get_current_superadmin)
 ):
     """
     Elimina todos los horarios de un grupo.

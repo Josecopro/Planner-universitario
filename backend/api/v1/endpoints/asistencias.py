@@ -8,6 +8,8 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 
 from db.session import get_db
+from core.security import get_current_superadmin, require_roles
+from models.usuario import Usuario
 from schemas.asistencia import (
     AsistenciaCreate,
     AsistenciaCreateBulk,
@@ -32,7 +34,8 @@ router = APIRouter()
 )
 def registrar_asistencia(
     asistencia_data: AsistenciaCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(require_roles(["Superadmin", "Profesor"]))
 ):
     """
     Registra la asistencia de un estudiante individual.
@@ -79,7 +82,8 @@ def registrar_asistencia(
 )
 def registrar_asistencia_bulk(
     asistencia_data: AsistenciaCreateBulk,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(require_roles(["Superadmin", "Profesor"]))
 ):
     """
     Registra la asistencia de múltiples estudiantes a la vez.
@@ -443,7 +447,8 @@ def obtener_asistencia(
 def actualizar_estado_asistencia(
     asistencia_id: int,
     asistencia_data: AsistenciaUpdate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(require_roles(["Superadmin", "Profesor"]))
 ):
     """
     Actualiza el estado de un registro de asistencia.
@@ -497,7 +502,8 @@ def actualizar_estado_asistencia(
 )
 def eliminar_asistencia(
     asistencia_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(get_current_superadmin)
 ):
     """
     Elimina un registro de asistencia.

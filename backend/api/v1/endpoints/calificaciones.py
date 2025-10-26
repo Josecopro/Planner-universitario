@@ -7,6 +7,8 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 
 from db.session import get_db
+from core.security import get_current_superadmin, require_roles
+from models.usuario import Usuario
 from schemas.calificacion import (
     CalificacionCreate,
     CalificacionUpdate,
@@ -29,7 +31,8 @@ router = APIRouter()
 )
 def crear_calificacion(
     calificacion_data: CalificacionCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(require_roles(["Superadmin", "Profesor"]))
 ):
     """
     Crea una calificación para una entrega.
@@ -73,7 +76,8 @@ def crear_calificacion(
 )
 def crear_calificaciones_bulk(
     calificaciones_data: CalificacionCreateBulk,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(require_roles(["Superadmin", "Profesor"]))
 ):
     """
     Crea múltiples calificaciones en una sola operación.
@@ -374,7 +378,8 @@ def obtener_calificacion(
 def actualizar_calificacion(
     calificacion_id: int,
     calificacion_data: CalificacionUpdate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(require_roles(["Superadmin", "Profesor"]))
 ):
     """
     Actualiza una calificación existente.
@@ -424,7 +429,8 @@ def actualizar_calificacion(
 )
 def eliminar_calificacion(
     calificacion_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(get_current_superadmin)
 ):
     """
     Elimina una calificación.

@@ -7,6 +7,8 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 
 from db.session import get_db
+from core.security import get_current_superadmin, require_roles
+from models.usuario import Usuario
 from schemas.curso import (
     CursoCreate,
     CursoUpdate,
@@ -30,7 +32,8 @@ router = APIRouter()
 )
 def crear_curso(
     curso_data: CursoCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(get_current_superadmin)
 ):
     """
     Crea un nuevo curso en el catálogo.
@@ -361,7 +364,8 @@ def obtener_estadisticas_curso(
 def actualizar_curso(
     curso_id: int,
     curso_data: CursoUpdate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(get_current_superadmin)
 ):
     """
     Actualiza un curso existente.
@@ -409,7 +413,8 @@ def actualizar_curso(
 def cambiar_estado_curso(
     curso_id: int,
     estado_data: CursoEstadoUpdate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(get_current_superadmin)
 ):
     """
     Cambia el estado de un curso.
@@ -451,7 +456,8 @@ def cambiar_estado_curso(
 )
 def desactivar_curso(
     curso_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(get_current_superadmin)
 ):
     """
     Desactiva un curso.

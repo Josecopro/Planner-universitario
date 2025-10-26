@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 
 from db.session import get_db
+from core.security import get_current_superadmin
 from schemas.facultad import (
     FacultadCreate,
     FacultadUpdate,
@@ -30,10 +31,13 @@ router = APIRouter()
 )
 def crear_facultad(
     facultad: FacultadCreate,
+    current_user = Depends(get_current_superadmin),
     db: Session = Depends(get_db)
 ):
     """
     Crea una nueva facultad en el sistema.
+    
+    **REQUIERE:** Rol de Superadmin
     
     **Parámetros:**
     - **codigo**: Código único de la facultad (ej: ING, CIEN, ADMIN)
@@ -47,6 +51,7 @@ def crear_facultad(
     **Retorna:** Facultad creada
     
     **Errores:**
+    - 403: Si no es Superadmin
     - 400: Código o nombre duplicado, o datos faltantes
     """
     try:
@@ -358,10 +363,13 @@ def obtener_cursos(
 def actualizar_facultad(
     facultad_id: int,
     datos_actualizados: FacultadUpdate,
+    current_user = Depends(get_current_superadmin),
     db: Session = Depends(get_db)
 ):
     """
     Actualiza los datos de una facultad.
+    
+    **REQUIERE:** Rol de Superadmin
     
     **Campos actualizables:**
     - **codigo**: Código único de la facultad
@@ -378,6 +386,7 @@ def actualizar_facultad(
     **Retorna:** Facultad actualizada
     
     **Errores:**
+    - 403: Si no es Superadmin
     - 400: Código o nombre duplicado
     - 404: Facultad no encontrada
     """

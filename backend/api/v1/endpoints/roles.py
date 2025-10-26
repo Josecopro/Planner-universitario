@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 
 from db.session import get_db
+from core.security import get_current_superadmin, get_current_active_user
 from schemas.rol import (
     RolCreate,
     RolUpdate,
@@ -23,19 +24,24 @@ router = APIRouter(prefix="/roles", tags=["roles"])
 @router.post("/", response_model=RolPublic, status_code=status.HTTP_201_CREATED)
 def crear_rol(
     rol: RolCreate,
+    current_user = Depends(get_current_superadmin),
     db: Session = Depends(get_db)
 ) -> Any:
     """
     Crea un nuevo rol en el sistema.
     
+    **REQUIERE:** Rol de Superadmin
+    
     Args:
         rol: Datos del rol a crear
+        current_user: Usuario autenticado (Superadmin)
         db: Sesión de base de datos
     
     Returns:
         RolPublic: Rol creado
     
     Raises:
+        HTTPException 403: Si no es Superadmin
         HTTPException 400: Si el nombre del rol ya existe
         HTTPException 500: Si ocurre un error al crear el rol
     """
@@ -278,20 +284,25 @@ def contar_usuarios_del_rol(
 def actualizar_descripcion(
     rol_id: int,
     nueva_descripcion: str = Query(..., min_length=1, description="Nueva descripción del rol"),
+    current_user = Depends(get_current_superadmin),
     db: Session = Depends(get_db)
 ) -> Any:
     """
     Actualiza la descripción de un rol.
     
+    **REQUIERE:** Rol de Superadmin
+    
     Args:
         rol_id: ID del rol a actualizar
         nueva_descripcion: Nueva descripción del rol
+        current_user: Usuario autenticado (Superadmin)
         db: Sesión de base de datos
     
     Returns:
         RolPublic: Rol con descripción actualizada
     
     Raises:
+        HTTPException 403: Si no es Superadmin
         HTTPException 404: Si el rol no existe
         HTTPException 500: Si ocurre un error al actualizar el rol
     """
@@ -313,19 +324,25 @@ def actualizar_descripcion(
 @router.delete("/{rol_id}", status_code=status.HTTP_204_NO_CONTENT)
 def eliminar_rol(
     rol_id: int,
+    current_user = Depends(get_current_superadmin),
     db: Session = Depends(get_db)
 ) -> None:
     """
     Elimina un rol del sistema.
     
+    **REQUIERE:** Rol de Superadmin
+    **SEGURIDAD:** Solo el Superadmin puede eliminar roles del sistema.
+    
     Args:
         rol_id: ID del rol a eliminar
+        current_user: Usuario autenticado (Superadmin)
         db: Sesión de base de datos
     
     Returns:
         None
     
     Raises:
+        HTTPException 403: Si no es Superadmin
         HTTPException 404: Si el rol no existe
         HTTPException 400: Si el rol tiene usuarios asociados
         HTTPException 500: Si ocurre un error al eliminar el rol

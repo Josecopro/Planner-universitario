@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 
 from db.session import get_db
+from core.security import get_current_superadmin, get_current_active_user
 from schemas.usuario import (
     UsuarioCreate,
     UsuarioUpdate,
@@ -25,19 +26,24 @@ router = APIRouter(prefix="/usuarios", tags=["usuarios"])
 @router.post("/", response_model=UsuarioPublic, status_code=status.HTTP_201_CREATED)
 def crear_usuario(
     usuario: UsuarioCreate,
+    current_user = Depends(get_current_superadmin),
     db: Session = Depends(get_db)
 ) -> Any:
     """
     Crea un nuevo usuario en el sistema.
     
+    **REQUIERE:** Rol de Superadmin
+    
     Args:
         usuario: Datos del usuario a crear
+        current_user: Usuario autenticado (Superadmin)
         db: Sesión de base de datos
     
     Returns:
         UsuarioPublic: Usuario creado
     
     Raises:
+        HTTPException 403: Si no es Superadmin
         HTTPException 400: Si el email ya está registrado o el rol no existe
         HTTPException 500: Si ocurre un error al crear el usuario
     """
@@ -703,19 +709,25 @@ def actualizar_ultimo_acceso(
 @router.delete("/{usuario_id}", status_code=status.HTTP_204_NO_CONTENT)
 def eliminar_usuario(
     usuario_id: int,
+    current_user = Depends(get_current_superadmin),
     db: Session = Depends(get_db)
 ) -> None:
     """
     Elimina un usuario del sistema.
     
+    **REQUIERE:** Rol de Superadmin
+    **SEGURIDAD:** Solo el Superadmin puede eliminar usuarios del sistema.
+    
     Args:
         usuario_id: ID del usuario a eliminar
+        current_user: Usuario autenticado (Superadmin)
         db: Sesión de base de datos
     
     Returns:
         None
     
     Raises:
+        HTTPException 403: Si no es Superadmin
         HTTPException 404: Si el usuario no existe
         HTTPException 500: Si ocurre un error al eliminar el usuario
     """

@@ -10,6 +10,8 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 
 from db.session import get_db
+from core.security import get_current_superadmin, require_roles
+from models.usuario import Usuario
 from schemas.profesor import (
     ProfesorCreate,
     ProfesorUpdate,
@@ -31,7 +33,8 @@ router = APIRouter()
 )
 def crear_perfil_profesor(
     profesor: ProfesorCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(get_current_superadmin)
 ):
     """
     Crea un perfil de profesor para un usuario.
@@ -436,7 +439,8 @@ def obtener_estadisticas(
 def actualizar_profesor(
     profesor_id: int,
     datos_actualizados: ProfesorUpdate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(get_current_superadmin)
 ):
     """
     Actualiza los datos de un profesor.
@@ -483,7 +487,8 @@ def actualizar_profesor(
 )
 def eliminar_profesor(
     profesor_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(get_current_superadmin)
 ):
     """
     Elimina un profesor del sistema.

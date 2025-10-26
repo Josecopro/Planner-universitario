@@ -10,6 +10,8 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 
 from db.session import get_db
+from core.security import get_current_superadmin, get_current_user, require_roles
+from models.usuario import Usuario
 from schemas.inscripcion import (
     InscripcionCreate,
     InscripcionUpdate,
@@ -31,7 +33,8 @@ router = APIRouter()
 )
 def inscribir_estudiante(
     inscripcion: InscripcionCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user)
 ):
     """
     Inscribe un estudiante en un grupo.
@@ -368,7 +371,8 @@ def verificar_inscripcion(
 def actualizar_inscripcion(
     inscripcion_id: int,
     datos_actualizados: InscripcionUpdate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(require_roles(["Superadmin", "Profesor"]))
 ):
     """
     Actualiza una inscripción existente.
@@ -429,7 +433,8 @@ def actualizar_inscripcion(
 def cambiar_estado(
     inscripcion_id: int,
     estado_update: InscripcionEstadoUpdate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(require_roles(["Superadmin", "Profesor"]))
 ):
     """
     Cambia el estado de una inscripción.
@@ -483,7 +488,8 @@ def cambiar_estado(
 def actualizar_nota(
     inscripcion_id: int,
     nota_definitiva: float = Query(..., ge=0.0, le=5.0, description="Nota definitiva"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(require_roles(["Superadmin", "Profesor"]))
 ):
     """
     Actualiza la nota definitiva de una inscripción.
@@ -528,7 +534,8 @@ def actualizar_nota(
 )
 def retirar_estudiante(
     inscripcion_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user)
 ):
     """
     Retira un estudiante de un grupo.
@@ -571,7 +578,8 @@ def retirar_estudiante(
 )
 def eliminar_inscripcion(
     inscripcion_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(get_current_superadmin)
 ):
     """
     Elimina una inscripción del sistema.

@@ -7,6 +7,8 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 
 from db.session import get_db
+from core.security import get_current_superadmin, get_current_user, require_roles
+from models.usuario import Usuario
 from schemas.entrega import (
     EntregaCreate,
     EntregaUpdate,
@@ -29,7 +31,8 @@ router = APIRouter()
 )
 def realizar_entrega(
     entrega_data: EntregaCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user)
 ):
     """
     Registra una entrega de actividad evaluativa.
@@ -325,7 +328,8 @@ def obtener_entrega(
 def actualizar_entrega(
     entrega_id: int,
     entrega_data: EntregaUpdate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user)
 ):
     """
     Actualiza una entrega existente.
@@ -379,7 +383,8 @@ def actualizar_entrega(
 )
 def eliminar_entrega(
     entrega_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user)
 ):
     """
     Elimina una entrega.

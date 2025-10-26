@@ -9,6 +9,8 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 
 from db.session import get_db
+from core.security import get_current_superadmin, require_roles
+from models.usuario import Usuario
 from schemas.estudiante import (
     EstudianteCreate,
     EstudianteUpdate,
@@ -32,7 +34,8 @@ router = APIRouter()
 )
 def crear_perfil_estudiante(
     estudiante: EstudianteCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(require_roles(["Superadmin"]))
 ):
     """
     Crea un perfil de estudiante para un usuario.
@@ -479,7 +482,8 @@ def obtener_estudiantes_grupo(
 def actualizar_estudiante(
     estudiante_id: int,
     datos_actualizados: EstudianteUpdate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(require_roles(["Superadmin"]))
 ):
     """
     Actualiza los datos de un estudiante.
@@ -526,7 +530,8 @@ def actualizar_estudiante(
 )
 def eliminar_estudiante(
     estudiante_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(get_current_superadmin)
 ):
     """
     Elimina un estudiante del sistema.
