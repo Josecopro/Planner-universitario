@@ -6,8 +6,15 @@ from datetime import datetime, timedelta
 from typing import Optional, Any
 from jose import JWTError, jwt
 from passlib.context import CryptContext
+from fastapi import Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
+from sqlalchemy.orm import Session
 
 from core.config import settings
+from schemas.token import TokenData
+
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
 
 
 # Contexto de hashing usando bcrypt
@@ -587,3 +594,312 @@ def clear_login_attempts(identifier: str) -> None:
     """
     if identifier in _login_attempts:
         del _login_attempts[identifier]
+
+
+def decode_access_token(token: str) -> TokenData:
+    """
+    Decodifica y valida un token JWT de acceso para dependencies de FastAPI.
+    
+    Args:
+        token: Token JWT a decodificar
+        
+    Returns:
+        TokenData con los datos del token
+        
+    Raises:
+        HTTPException 401: Si el token es inválido o ha expirado
+    """
+    try:
+        payload = jwt.decode(
+            token,
+            settings.SECRET_KEY,
+            algorithms=[settings.ALGORITHM]
+        )
+        
+        usuario_id: Optional[int] = payload.get("sub")
+        email: Optional[str] = payload.get("email")
+        rol: Optional[str] = payload.get("rol")
+        
+        if usuario_id is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="No se pudo validar las credenciales",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        
+        token_data = TokenData(usuario_id=usuario_id, email=email, rol=rol, exp=None)
+        return token_data
+        
+    except JWTError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token inválido o expirado",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+
+async def get_current_user(
+    token: str = Depends(oauth2_scheme),
+    db: Session = Depends(lambda: None)
+):
+    """
+    Obtiene el usuario actual autenticado desde el token JWT.
+    
+    Dependency para proteger endpoints que requieren autenticación.
+    
+    Args:
+        token: Token JWT del header Authorization
+        db: Sesión de base de datos
+        
+    Returns:
+        Usuario autenticado
+        
+    Raises:
+        HTTPException 401: Si el token es inválido o el usuario no existe
+        HTTPException 403: Si el usuario está inactivo
+        
+    Example:
+        @router.get("/perfil")
+        async def mi_perfil(current_user = Depends(get_current_user)):
+            return current_user
+    """
+    from db.session import get_db
+    from services.usuario_service import obtener_usuario_por_id
+    
+    if db is None:
+        db = next(get_db())
+    
+    token_data = decode_access_token(token)
+    
+    if token_data.usuario_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token inválido",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    usuario = obtener_usuario_por_id(db, token_data.usuario_id)
+    
+    if usuario is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Usuario no encontrado",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    from models.usuario import EstadoUsuario
+    if usuario.estado == EstadoUsuario.INACTIVO:  # type: ignore
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Usuario inactivo. Contacte al administrador."
+        )
+    
+    if usuario.estado == EstadoUsuario.PENDIENTE_DE_VERIFICACION:  # type: ignore
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Email pendiente de verificación"
+        )
+    
+    return usuario
+
+
+async def get_current_active_user(
+    current_user = Depends(get_current_user)
+):
+    """
+    Dependency que asegura que el usuario está activo.
+    
+    Args:
+        current_user: Usuario autenticado
+        
+    Returns:
+        Usuario activo
+        
+    Raises:
+        HTTPException 403: Si el usuario no está activo
+    """
+    from models.usuario import EstadoUsuario
+    
+    if current_user.estado != EstadoUsuario.ACTIVO:  # type: ignore
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Usuario no está activo"
+        )
+    
+    return current_user
+
+
+async def get_current_superadmin(
+    current_user = Depends(get_current_active_user)
+):
+    """
+    Dependency para endpoints que solo Superadmin puede acceder.
+    
+    Args:
+        current_user: Usuario autenticado y activo
+        
+    Returns:
+        Usuario superadmin
+        
+    Raises:
+        HTTPException 403: Si el usuario no es Superadmin
+        
+    Example:
+        @router.delete("/usuarios/{id}")
+        async def eliminar_usuario(
+            usuario_id: int,
+            admin = Depends(get_current_superadmin)
+        ):
+            # Solo superadmin puede eliminar usuarios
+            ...
+    """
+    if current_user.rol.nombre != "Superadmin":  # type: ignore
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="No tiene permisos suficientes. Se requiere rol de Superadmin."
+        )
+    
+    return current_user
+
+
+async def get_current_profesor(
+    current_user = Depends(get_current_active_user)
+):
+    """
+    Dependency para endpoints que Profesores o Superadmin pueden acceder.
+    
+    Args:
+        current_user: Usuario autenticado y activo
+        
+    Returns:
+        Usuario profesor o superadmin
+        
+    Raises:
+        HTTPException 403: Si el usuario no es Profesor ni Superadmin
+        
+    Example:
+        @router.post("/calificaciones")
+        async def registrar_calificacion(
+            profesor = Depends(get_current_profesor)
+        ):
+            # Solo profesores pueden calificar
+            ...
+    """
+    if current_user.rol.nombre not in ["Profesor", "Superadmin"]:  # type: ignore
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="No tiene permisos suficientes. Se requiere rol de Profesor."
+        )
+    
+    return current_user
+
+
+async def get_current_estudiante(
+    current_user = Depends(get_current_active_user)
+):
+    """
+    Dependency para endpoints que Estudiantes pueden acceder.
+    
+    Args:
+        current_user: Usuario autenticado y activo
+        
+    Returns:
+        Usuario estudiante
+        
+    Raises:
+        HTTPException 403: Si el usuario no es Estudiante
+        
+    Example:
+        @router.get("/mis-calificaciones")
+        async def ver_calificaciones(
+            estudiante = Depends(get_current_estudiante)
+        ):
+            # Solo estudiantes pueden ver sus calificaciones
+            ...
+    """
+    if current_user.rol.nombre != "Estudiante":  # type: ignore
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="No tiene permisos suficientes. Se requiere rol de Estudiante."
+        )
+    
+    return current_user
+
+
+def require_roles(allowed_roles: list[str]):
+    """
+    Dependency factory para verificar múltiples roles permitidos.
+    
+    Args:
+        allowed_roles: Lista de roles permitidos
+        
+    Returns:
+        Dependency function
+        
+    Example:
+        @router.get("/dashboard")
+        async def dashboard(
+            user = Depends(require_roles(["Superadmin", "Coordinador"]))
+        ):
+            # Solo superadmin o coordinador pueden acceder
+            ...
+    """
+    async def role_checker(current_user = Depends(get_current_active_user)):
+        if current_user.rol.nombre not in allowed_roles:  # type: ignore
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"No tiene permisos suficientes. Se requiere uno de estos roles: {', '.join(allowed_roles)}"
+            )
+        return current_user
+    
+    return role_checker
+
+
+def get_optional_current_user(
+    token: Optional[str] = Depends(oauth2_scheme),
+    db: Session = Depends(lambda: None)
+):
+    """
+    Obtiene el usuario actual si está autenticado, None si no lo está.
+    
+    Útil para endpoints que funcionan tanto para usuarios autenticados
+    como no autenticados, pero con diferentes niveles de información.
+    
+    Args:
+        token: Token JWT (opcional)
+        db: Sesión de base de datos
+        
+    Returns:
+        Usuario autenticado o None
+        
+    Example:
+        @router.get("/cursos")
+        async def listar_cursos(
+            user = Depends(get_optional_current_user)
+        ):
+            if user:
+                # Mostrar cursos personalizados
+                ...
+            else:
+                # Mostrar cursos públicos
+                ...
+    """
+    if token is None:
+        return None
+    
+    try:
+        from db.session import get_db
+        from services.usuario_service import obtener_usuario_por_id
+        
+        if db is None:
+            db = next(get_db())
+        
+        token_data = decode_access_token(token)
+        
+        if token_data.usuario_id is None:
+            return None
+        
+        usuario = obtener_usuario_por_id(db, token_data.usuario_id)
+        return usuario
+    except HTTPException:
+        return None
