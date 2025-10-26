@@ -5,10 +5,8 @@ import { dashboardApi } from '../../services/api';
 import './Dashboard.scss';
 
 const Dashboard = () => {
-  // Usar el hook personalizado para obtener datos del dashboard
   const { data: dashboardData, loading, error, refetch } = useApi(() => dashboardApi.getData());
 
-  // Mostrar estado de carga
   if (loading) {
     return (
       <div className="dashboard">
@@ -20,7 +18,6 @@ const Dashboard = () => {
     );
   }
 
-  // Mostrar error si ocurre
   if (error) {
     return (
       <div className="dashboard">
@@ -35,7 +32,6 @@ const Dashboard = () => {
     );
   }
 
-  // Extraer datos de la respuesta de la API
   const stats = dashboardData?.stats || {};
   const weeklyProgressData = dashboardData?.weekly_progress || [];
   const gradeDistributionData = dashboardData?.grade_distribution || [];

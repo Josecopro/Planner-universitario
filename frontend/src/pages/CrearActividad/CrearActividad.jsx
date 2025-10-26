@@ -134,14 +134,13 @@ const CrearActividad = () => {
     
     if (validateForm()) {
       try {
-        // Preparar datos para la API
         const activityData = {
           title: formData.title,
           subject: formData.subject,
           description: formData.description,
-          due_date: formData.dueDate, // Backend usa due_date (snake_case)
+          due_date: formData.dueDate,
           priority: formData.priority,
-          status: 'pending', // Nuevo estado por defecto
+          status: 'pending',
           category: formData.category,
           estimated_hours: formData.estimatedHours ? parseInt(formData.estimatedHours) : null,
           tags: formData.tags
@@ -151,7 +150,6 @@ const CrearActividad = () => {
         
         alert('¡Actividad creada exitosamente!');
         
-        // Reset form
         setFormData({
           title: '',
           subject: '',
@@ -166,7 +164,6 @@ const CrearActividad = () => {
           attachments: []
         });
 
-        // Navegar a la página de actividades
         navigate('/actividades');
         
       } catch (error) {
