@@ -5,7 +5,7 @@ import './CrearActividad.scss';
 
 const CrearActividad = () => {
   const navigate = useNavigate();
-  const { mutate, loading: isCreating } = useMutation();
+  const { mutate: createActivity, loading: isCreating } = useMutation(activitiesApi.create);
   
   const [formData, setFormData] = useState({
     title: '',
@@ -54,7 +54,6 @@ const CrearActividad = () => {
       [name]: value
     }));
 
-    // Clear error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
@@ -146,7 +145,7 @@ const CrearActividad = () => {
           tags: formData.tags
         };
 
-        await mutate(() => activitiesApi.create(activityData));
+        await createActivity(activityData);
         
         alert('¡Actividad creada exitosamente!');
         

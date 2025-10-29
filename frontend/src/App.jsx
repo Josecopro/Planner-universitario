@@ -9,7 +9,9 @@ import {
   Chat,
   Actividades,
   CrearActividad,
-  Configuracion
+  Configuracion,
+  Login,
+  ForgotPassword
 } from './pages';
 import './App.css';
 import './styles/api-states.css';
@@ -33,16 +35,24 @@ function App() {
     </>
   );
 
+  const renderPageClean = (Component) => (
+    <main className="app__main-content app__main-content--no-nav">
+      <Component />
+    </main>
+  );
+
   return (
     <div className="app">
       <Routes>
-        <Route path="/" element={renderPage(Inicio, { showNavigation: false })} />
+        <Route path="/" element={renderPageClean(Inicio)} />
+        <Route path="/login" element={renderPageClean(Login)} />
         <Route path="/dashboard" element={renderPage(Dashboard)} />
         <Route path="/estudiantes" element={renderPage(Estudiantes)} />
         <Route path="/actividades" element={renderPage(Actividades)} />
         <Route path="/crear-actividad" element={renderPage(CrearActividad)} />
         <Route path="/chat" element={renderPage(Chat)} />
         <Route path="/configuracion" element={renderPage(Configuracion)} />
+        <Route path="recuperar-password" element={renderPageClean(ForgotPassword)} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </div>

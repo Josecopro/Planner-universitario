@@ -40,6 +40,31 @@ const AUTH_ENDPOINTS = {
 };
 
 /**
+ * Datos básicos de prueba para desarrollo
+ * Usuarios predefinidos para testing y desarrollo inicial
+ */
+const DEMO_USERS = {
+  // Se pueden agregar más usuarios de prueba aquí
+  'admin@universidad.edu': {
+    password: 'admin123',
+    userData: {
+      id: 2,
+      email: 'admin@universidad.edu',
+      nombre: 'Administrador',
+      apellido: 'Sistema',
+      estado: 'Activo',
+      rol: {
+        id: 1,
+        nombre: 'Superadmin',
+        descripcion: 'Administrador del sistema'
+      },
+      ultimo_acceso: new Date().toISOString(),
+      fecha_creacion: '2025-01-01T00:00:00Z'
+    }
+  }
+};
+
+/**
  * Servicio de Autenticación
  * 
  * Proporciona métodos para todas las operaciones de autenticación
@@ -73,19 +98,54 @@ const authService = {
    * 
    * @example
    * const result = await authService.login({
-   *   email: 'admin@universidad.edu',
-   *   password: 'Admin123!'
+   *   email: 'kevin',
+   *   password: 'super'
    * });
-   * console.log(result.usuario.nombre); // "Super"
+   * console.log(result.usuario.nombre); // "Kevin"
    */
   async login(credentials) {
-    const response = await apiClient.post(AUTH_ENDPOINTS.LOGIN, credentials);
-    const { access_token, usuario } = response.data;
+    // Verificar primero si es un usuario de prueba/demo
+    const demoUser = DEMO_USERS[credentials.email];
     
-    tokenManager.setToken(access_token);
-    userManager.setUser(usuario);
+    if (demoUser && demoUser.password === credentials.password) {
+      // Login con datos de prueba
+      console.log('🔧 LOGIN DEMO: Usando credenciales de prueba');
+      
+      // Simular token JWT
+      const mockToken = `demo-jwt-token-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      
+      const loginResponse = {
+        access_token: mockToken,
+        token_type: 'Bearer',
+        usuario: demoUser.userData
+      };
+      
+      // Guardar token y usuario
+      tokenManager.setToken(loginResponse.access_token);
+      userManager.setUser(loginResponse.usuario);
+      
+      // Simular delay de red
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      return loginResponse;
+    }
     
-    return response.data;
+    // Login normal con backend
+    try {
+      const response = await apiClient.post(AUTH_ENDPOINTS.LOGIN, credentials);
+      const { access_token, usuario } = response.data;
+      
+      tokenManager.setToken(access_token);
+      userManager.setUser(usuario);
+      
+      return response.data;
+    } catch (error) {
+      // Si el backend no está disponible y no es usuario demo, mostrar error más claro
+      if (error.code === 'ECONNREFUSED' || error.message.includes('Network Error')) {
+        throw new Error('No se pudo conectar con el servidor. Verifica tu conexión o usa las credenciales de prueba.');
+      }
+      throw error;
+    }
   },
 
   /**
@@ -266,6 +326,36 @@ const authService = {
    */
   isAuthenticated() {
     return tokenManager.hasToken();
+  },
+
+  /**
+   * Obtener información de usuarios de prueba disponibles
+   * 
+   * Devuelve una lista de credenciales de prueba para desarrollo
+   * 
+   * @returns {Array<Object>} Lista de usuarios de prueba
+   * 
+   * @example
+   * const demoUsers = authService.getDemoUsers();
+   * console.log('Usuarios de prueba disponibles:', demoUsers);
+   */
+  getDemoUsers() {
+    return Object.keys(DEMO_USERS).map(username => ({
+      username,
+      password: DEMO_USERS[username].password,
+      role: DEMO_USERS[username].userData.rol.nombre,
+      nombre: DEMO_USERS[username].userData.nombre
+    }));
+  },
+
+  /**
+   * Verificar si el token actual es de un usuario demo
+   * 
+   * @returns {boolean} True si es token demo, false en caso contrario
+   */
+  isDemoUser() {
+    const token = tokenManager.getToken();
+    return token && token.startsWith('demo-jwt-token-');
   },
 
   /**

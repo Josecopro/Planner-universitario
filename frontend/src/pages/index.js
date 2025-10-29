@@ -5,3 +5,5 @@ export { default as Chat } from './Chat/Chat';
 export { default as Actividades } from './Actividades/Actividades';
 export { default as CrearActividad } from './CrearActividad/CrearActividad';
 export { default as Configuracion } from './Configuracion/Configuracion';
+export { default as Login } from './Login';
+export { default as ForgotPassword } from './ForgotPassword';
