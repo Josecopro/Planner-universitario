@@ -11,7 +11,16 @@ import {
   CrearActividad,
   Configuracion,
   Login,
-  ForgotPassword
+  ForgotPassword,
+  MisCursos,
+  VistaDetalladaCurso,
+  ActividadesEntregas,
+  MisCalificaciones,
+  Asistencias,
+  Inscripciones,
+  HorarioSemanal,
+  MiPerfil,
+  LandingPage
 } from './pages';
 import './App.css';
 import './styles/api-states.css';
@@ -45,14 +54,23 @@ function App() {
     <div className="app">
       <Routes>
         <Route path="/" element={renderPageClean(Inicio)} />
+        <Route path="/landing" element={renderPageClean(LandingPage)} />
         <Route path="/login" element={renderPageClean(Login)} />
+        <Route path="/recuperar-password" element={renderPageClean(ForgotPassword)} />
         <Route path="/dashboard" element={renderPage(Dashboard)} />
+        <Route path="/mis-cursos" element={renderPage(MisCursos)} />
+        <Route path="/curso/:id" element={renderPage(VistaDetalladaCurso)} />
+        <Route path="/actividades-entregas" element={renderPage(ActividadesEntregas)} />
+        <Route path="/mis-calificaciones" element={renderPage(MisCalificaciones)} />
+        <Route path="/asistencias" element={renderPage(Asistencias)} />
+        <Route path="/inscripciones" element={renderPage(Inscripciones)} />
+        <Route path="/horario-semanal" element={renderPage(HorarioSemanal)} />
+        <Route path="/mi-perfil" element={renderPage(MiPerfil)} />
         <Route path="/estudiantes" element={renderPage(Estudiantes)} />
         <Route path="/actividades" element={renderPage(Actividades)} />
         <Route path="/crear-actividad" element={renderPage(CrearActividad)} />
         <Route path="/chat" element={renderPage(Chat)} />
         <Route path="/configuracion" element={renderPage(Configuracion)} />
-        <Route path="recuperar-password" element={renderPageClean(ForgotPassword)} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </div>
