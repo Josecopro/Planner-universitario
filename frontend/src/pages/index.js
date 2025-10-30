@@ -17,3 +17,5 @@ export { default as Inscripciones } from './Inscripciones';
 export { default as HorarioSemanal } from './HorarioSemanal';
 export { default as MiPerfil } from './MiPerfil';
 export { default as LandingPage } from './LandingPage';
+export { default as Usuarios } from './Usuarios/Usuarios';
+

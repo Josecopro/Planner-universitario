@@ -244,8 +244,229 @@ export const activitiesApi = {
     }
   },
 
+  update: async (id, data) => {
+    try {
+      console.log('✏️ [activitiesApi] Actualizando actividad:', id, data);
+      
+      const { supabase } = await import('../config/supabase');
+      
+      // Construir objeto de actualización
+      const updateData = {
+        titulo: data.titulo,
+        descripcion: data.descripcion,
+        fecha_entrega: data.fecha_entrega,
+        tipo: data.tipo,
+        prioridad: data.prioridad,
+        porcentaje: data.porcentaje
+      };
+
+      // Solo incluir grupo_id si se proporciona
+      if (data.grupo_id !== undefined) {
+        updateData.grupo_id = data.grupo_id;
+      }
+
+      const { data: actividad, error } = await supabase
+        .from('actividadevaluativa')
+        .update(updateData)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('❌ Error al actualizar actividad:', error);
+        throw error;
+      }
+
+      console.log('✅ Actividad actualizada:', actividad);
+      return actividad;
+    } catch (err) {
+      console.error('❌ Error en activitiesApi.update:', err);
+      throw err;
+    }
+  },
+
   listLocal: () => {
     return JSON.parse(localStorage.getItem('local_actividades') || '[]');
+  }
+};
+
+// API para manejar entregas de actividades
+export const entregasApi = {
+  getByActividad: async (actividadId) => {
+    try {
+      console.log('🔍 [entregasApi] Obteniendo entregas para actividad:', actividadId);
+      
+      const { supabase } = await import('../config/supabase');
+      
+      const { data, error } = await supabase
+        .from('entrega')
+        .select(`
+          id,
+          actividad_id,
+          estudiante_id,
+          grupo_id,
+          fecha_entrega,
+          estado,
+          texto_entrega,
+          archivos_adjuntos,
+          estudiante:usuarios!entrega_estudiante_id_fkey (
+            id,
+            nombre,
+            apellido,
+            correo
+          ),
+          actividad:actividadevaluativa!fk_actividad_entrega (
+            id,
+            titulo
+          ),
+          grupo:grupo!entrega_grupo_id_fkey (
+            id,
+            semestre,
+            curso:curso!fk_curso_grupo (
+              codigo,
+              nombre
+            )
+          )
+        `)
+        .eq('actividad_id', actividadId)
+        .order('fecha_entrega', { ascending: false });
+
+      if (error) {
+        console.error('❌ Error al obtener entregas:', error);
+        throw error;
+      }
+
+      console.log('✅ Entregas obtenidas desde BD:', data);
+      
+      // Obtener calificaciones para estas entregas
+      const entregaIds = (data || []).map(e => e.id);
+      let calificaciones = [];
+      
+      if (entregaIds.length > 0) {
+        const { data: cals, error: calError } = await supabase
+          .from('calificacion')
+          .select('*')
+          .in('entrega_id', entregaIds);
+        
+        if (!calError) {
+          calificaciones = cals || [];
+        }
+      }
+
+      console.log('✅ Calificaciones obtenidas:', calificaciones);
+      
+      // Formatear datos
+      const entregas = (data || []).map(e => {
+        const cal = calificaciones.find(c => c.entrega_id === e.id);
+        
+        return {
+          id: e.id,
+          actividad_id: e.actividad_id,
+          estudiante_id: e.estudiante_id,
+          grupo_id: e.grupo_id,
+          fecha_entrega: e.fecha_entrega,
+          estado: e.estado,
+          texto_entrega: e.texto_entrega,
+          archivos_adjuntos: e.archivos_adjuntos,
+          estudiante: {
+            id: e.estudiante.id,
+            nombre: e.estudiante.nombre,
+            apellido: e.estudiante.apellido,
+            correo: e.estudiante.correo,
+            nombre_completo: `${e.estudiante.nombre} ${e.estudiante.apellido}`
+          },
+          actividad: {
+            id: e.actividad.id,
+            titulo: e.actividad.titulo
+          },
+          grupo: e.grupo ? {
+            id: e.grupo.id,
+            semestre: e.grupo.semestre,
+            curso: e.grupo.curso?.nombre || 'Sin curso'
+          } : null,
+          calificacion: cal ? {
+            id: cal.id,
+            nota: cal.nota,
+            retroalimentacion: cal.retroalimentacion,
+            fecha_calificacion: cal.fecha_calificacion
+          } : null
+        };
+      });
+
+      console.log('✅ Entregas formateadas:', entregas);
+      return entregas;
+    } catch (err) {
+      console.error('❌ Error en entregasApi.getByActividad:', err);
+      return [];
+    }
+  },
+
+  calificar: async (entregaId, nota, retroalimentacion) => {
+    try {
+      console.log('📝 [entregasApi] Calificando entrega:', entregaId, nota);
+      
+      const { supabase } = await import('../config/supabase');
+      
+      // Verificar si ya existe una calificación
+      const { data: existing, error: checkError } = await supabase
+        .from('calificacion')
+        .select('id')
+        .eq('entrega_id', entregaId)
+        .maybeSingle();
+
+      if (checkError && checkError.code !== 'PGRST116') {
+        console.error('❌ Error al verificar calificación:', checkError);
+        throw checkError;
+      }
+
+      let result;
+      
+      if (existing) {
+        // Actualizar calificación existente
+        const { data, error } = await supabase
+          .from('calificacion')
+          .update({
+            nota: nota,
+            retroalimentacion: retroalimentacion,
+            fecha_calificacion: new Date().toISOString()
+          })
+          .eq('entrega_id', entregaId)
+          .select()
+          .single();
+
+        if (error) {
+          console.error('❌ Error al actualizar calificación:', error);
+          throw error;
+        }
+        
+        result = data;
+      } else {
+        // Crear nueva calificación
+        const { data, error } = await supabase
+          .from('calificacion')
+          .insert([{
+            entrega_id: entregaId,
+            nota: nota,
+            retroalimentacion: retroalimentacion,
+            fecha_calificacion: new Date().toISOString()
+          }])
+          .select()
+          .single();
+
+        if (error) {
+          console.error('❌ Error al crear calificación:', error);
+          throw error;
+        }
+        
+        result = data;
+      }
+
+      console.log('✅ Calificación guardada:', result);
+      return result;
+    } catch (err) {
+      console.error('❌ Error en entregasApi.calificar:', err);
+      throw err;
+    }
   }
 };
 
@@ -526,10 +747,178 @@ export const coursesApi = {
   }
 };
 
+// API para gestión de usuarios (superadmin)
+export const usuariosApi = {
+  getAll: async () => {
+    try {
+      console.log('🔍 [usuariosApi] Obteniendo todos los usuarios...');
+      
+      const { supabase } = await import('../config/supabase');
+      
+      const { data, error } = await supabase
+        .from('usuarios')
+        .select(`
+          id,
+          nombre,
+          apellido,
+          correo,
+          rol_id,
+          activo,
+          rol:rol_id (
+            id,
+            nombre
+          )
+        `)
+        .order('id', { ascending: true });
+
+      if (error) {
+        console.error('❌ Error al obtener usuarios:', error);
+        throw error;
+      }
+
+      // Formatear datos
+      const usuarios = (data || []).map(u => ({
+        id: u.id,
+        nombre: u.nombre,
+        apellido: u.apellido,
+        correo: u.correo,
+        rol_id: u.rol_id,
+        rol_nombre: u.rol?.nombre || 'Sin rol',
+        activo: u.activo
+      }));
+
+      console.log('✅ Usuarios obtenidos:', usuarios);
+      return usuarios;
+    } catch (err) {
+      console.error('❌ Error en usuariosApi.getAll:', err);
+      throw err;
+    }
+  },
+
+  getRoles: async () => {
+    try {
+      console.log('🔍 [usuariosApi] Obteniendo roles...');
+      
+      const { supabase } = await import('../config/supabase');
+      
+      const { data, error } = await supabase
+        .from('rol')
+        .select('*')
+        .order('id', { ascending: true });
+
+      if (error) {
+        console.error('❌ Error al obtener roles:', error);
+        throw error;
+      }
+
+      console.log('✅ Roles obtenidos:', data);
+      return data || [];
+    } catch (err) {
+      console.error('❌ Error en usuariosApi.getRoles:', err);
+      throw err;
+    }
+  },
+
+  create: async (userData) => {
+    try {
+      console.log('📝 [usuariosApi] Creando nuevo usuario:', userData);
+      
+      const { supabase } = await import('../config/supabase');
+      
+      const { data, error } = await supabase
+        .from('usuarios')
+        .insert([{
+          nombre: userData.nombre,
+          apellido: userData.apellido,
+          correo: userData.correo,
+          password: userData.password, // En producción, deberías hashear esto
+          rol_id: userData.rol_id
+        }])
+        .select()
+        .single();
+
+      if (error) {
+        console.error('❌ Error al crear usuario:', error);
+        throw error;
+      }
+
+      console.log('✅ Usuario creado:', data);
+      return data;
+    } catch (err) {
+      console.error('❌ Error en usuariosApi.create:', err);
+      throw err;
+    }
+  },
+
+  update: async (id, userData) => {
+    try {
+      console.log('✏️ [usuariosApi] Actualizando usuario:', id, userData);
+      
+      const { supabase } = await import('../config/supabase');
+      
+      const updateData = {
+        nombre: userData.nombre,
+        apellido: userData.apellido,
+        correo: userData.correo,
+        rol_id: userData.rol_id
+      };
+
+      // Solo incluir password si se proporciona
+      if (userData.password) {
+        updateData.password = userData.password;
+      }
+
+      const { data, error } = await supabase
+        .from('usuarios')
+        .update(updateData)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('❌ Error al actualizar usuario:', error);
+        throw error;
+      }
+
+      console.log('✅ Usuario actualizado:', data);
+      return data;
+    } catch (err) {
+      console.error('❌ Error en usuariosApi.update:', err);
+      throw err;
+    }
+  },
+
+  delete: async (id) => {
+    try {
+      console.log('🗑️ [usuariosApi] Eliminando usuario:', id);
+      
+      const { supabase } = await import('../config/supabase');
+      
+      const { error } = await supabase
+        .from('usuarios')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        console.error('❌ Error al eliminar usuario:', error);
+        throw error;
+      }
+
+      console.log('✅ Usuario eliminado correctamente');
+      return true;
+    } catch (err) {
+      console.error('❌ Error en usuariosApi.delete:', err);
+      throw err;
+    }
+  }
+};
+
 // Export a small default object for consumers that use default import
 export default {
   useApi,
   useMutation,
   activitiesApi,
-  studentsApi
+  studentsApi,
+  entregasApi,
+  usuariosApi
 };

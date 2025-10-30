@@ -5,7 +5,22 @@ import './Navigation.scss';
 
 const Navigation = () => {
   const location = useLocation();
-  const navItems = APP_PAGES.filter((item) => item.showInSidebar);
+  
+  // Obtener el rol del usuario desde sessionStorage
+  const userSession = JSON.parse(sessionStorage.getItem('user') || '{}');
+  const userRole = userSession.rol_id;
+
+  // Filtrar items basado en showInSidebar y roleRequired
+  const navItems = APP_PAGES.filter((item) => {
+    if (!item.showInSidebar) return false;
+    
+    // Si el item requiere un rol específico, verificar que el usuario tenga ese rol
+    if (item.roleRequired !== undefined) {
+      return userRole === item.roleRequired;
+    }
+    
+    return true;
+  });
 
   return (
     <nav className="navigation">
