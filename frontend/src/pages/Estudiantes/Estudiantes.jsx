@@ -1,14 +1,70 @@
-import React, { useState } from 'react';
-import { useApi, useMutation, studentsApi } from '../../services/api';
+import React, { useState, useEffect } from 'react';
+import { studentsApi } from '../../services/api';
 import './Estudiantes.scss';
 
 const Estudiantes = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [students, setStudents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [mutationLoading, setMutationLoading] = useState(false);
 
-  const { data: students, loading, error, refetch } = useApi(() => studentsApi.getAll());
+  // Cargar estudiantes del profesor al montar el componente
+  useEffect(() => {
+    const loadStudents = async () => {
+      try {
+        setLoading(true);
+        setError(null);
 
-  const { mutate, loading: mutationLoading } = useMutation();
+        // Obtener el correo del usuario logueado
+        const userStr = localStorage.getItem('user');
+        let correo = null;
+        
+        if (userStr) {
+          try {
+            const user = JSON.parse(userStr);
+            correo = user.email || user.correo;
+            console.log('📧 [Estudiantes] Correo del profesor:', correo);
+          } catch (e) {
+            console.error('❌ Error al parsear usuario:', e);
+          }
+        }
+
+        if (!correo) {
+          console.warn('⚠️ No se encontró correo de usuario logueado');
+          setStudents([]);
+          setLoading(false);
+          return;
+        }
+
+        // Cargar estudiantes del profesor
+        console.log('🔍 [Estudiantes] Cargando estudiantes del profesor...');
+        const data = await studentsApi.getByProfesor(correo);
+        setStudents(data || []);
+        console.log('✅ [Estudiantes] Estudiantes cargados:', data);
+      } catch (err) {
+        console.error('❌ [Estudiantes] Error al cargar estudiantes:', err);
+        setError(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadStudents();
+  }, []);
+
+  const refetch = async () => {
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+      const user = JSON.parse(userStr);
+      const correo = user.email || user.correo;
+      if (correo) {
+        const data = await studentsApi.getByProfesor(correo);
+        setStudents(data || []);
+      }
+    }
+  };
 
   const studentsArray = students || [];
   
@@ -25,11 +81,14 @@ const Estudiantes = () => {
   const handleDeleteStudent = async (id, name) => {
     if (window.confirm(`¿Estás seguro de que quieres eliminar a ${name}?`)) {
       try {
-        await mutate(() => studentsApi.delete(id));
+        setMutationLoading(true);
+        await studentsApi.delete(id);
         await refetch();
         alert('Estudiante eliminado correctamente');
       } catch (error) {
         alert(`Error al eliminar estudiante: ${error.message}`);
+      } finally {
+        setMutationLoading(false);
       }
     }
   };

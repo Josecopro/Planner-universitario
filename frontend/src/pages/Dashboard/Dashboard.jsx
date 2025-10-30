@@ -1,7 +1,6 @@
 import React from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { useApi } from '../../services/api';
-import { dashboardApi } from '../../services/api';
 import './Dashboard.scss';
 
 const Dashboard = () => {

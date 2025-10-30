@@ -4,8 +4,8 @@ import { findPageByPath } from '../../constants/navigation';
 import './NavBar.scss';
 
 const DEFAULT_USER = {
-	name: 'Laura Mejía',
-	role: 'Coordinadora académica',
+	name: 'Usuario',
+	role: 'Sin rol',
 };
 
 const formatSegment = (segment = '') =>
@@ -41,11 +41,66 @@ const getInitials = (name = '') =>
 		.slice(0, 2)
 		.join('');
 
-const NavBar = ({ user = DEFAULT_USER, onLogout }) => {
+// Función para obtener datos del usuario desde localStorage
+const getUserFromStorage = () => {
+	try {
+		const userStr = localStorage.getItem('user');
+		if (!userStr) return null;
+		
+		const user = JSON.parse(userStr);
+		console.log('📊 [NavBar] Usuario desde localStorage:', user);
+		
+		// Extraer nombre y rol del usuario
+		const nombre = user.user_metadata?.nombre || user.nombre || user.email?.split('@')[0] || 'Usuario';
+		const apellido = user.user_metadata?.apellido || user.apellido || '';
+		const fullName = `${nombre} ${apellido}`.trim();
+		
+		// Extraer rol - puede venir de diferentes lugares
+		const rol = user.user_metadata?.rol || 
+		            user.rol?.nombre || 
+		            user.rol_nombre || 
+		            'Usuario';
+		
+		console.log('✅ [NavBar] Datos procesados:', { fullName, rol });
+		
+		return {
+			name: fullName,
+			role: rol
+		};
+	} catch (e) {
+		console.error('❌ [NavBar] Error al parsear usuario:', e);
+		return null;
+	}
+};
+
+const NavBar = ({ user: userProp, onLogout }) => {
 	const location = useLocation();
 	const navigate = useNavigate();
 	const [isMenuOpen, setIsMenuOpen] = useState(false);
+	const [currentUser, setCurrentUser] = useState(DEFAULT_USER);
 	const menuRef = useRef(null);
+
+	// Actualizar usuario desde localStorage al montar y cuando cambie
+	useEffect(() => {
+		const updateUser = () => {
+			const storedUser = getUserFromStorage();
+			if (storedUser) {
+				console.log('✅ [NavBar] Usuario actualizado:', storedUser);
+				setCurrentUser(storedUser);
+			} else if (userProp) {
+				setCurrentUser(userProp);
+			}
+		};
+
+		updateUser();
+
+		// Escuchar cambios en localStorage (por si el usuario se actualiza en otra pestaña)
+		window.addEventListener('storage', updateUser);
+		
+		return () => {
+			window.removeEventListener('storage', updateUser);
+		};
+	}, [userProp]);
 
 	const currentPage = useMemo(
 		() => findPageByPath(location.pathname) ?? {
@@ -91,13 +146,18 @@ const NavBar = ({ user = DEFAULT_USER, onLogout }) => {
 	const handleLogout = () => {
 		closeMenu();
 
+		// Limpiar localStorage
+		localStorage.removeItem('user');
+		localStorage.removeItem('supabase_session');
+		console.log('✅ [NavBar] Sesión cerrada, localStorage limpiado');
+
 		if (onLogout) {
 			onLogout();
 			return;
 		}
 
-		// Placeholder: aaqui va la logica :p
-		console.info('Acción de cierre de sesión pendiente de implementación.');
+		// Redirigir al login
+		navigate('/login');
 	};
 
 	return (
@@ -143,12 +203,12 @@ const NavBar = ({ user = DEFAULT_USER, onLogout }) => {
 						aria-expanded={isMenuOpen}
 					>
 						<span className="nav-bar__avatar" aria-hidden="true">
-							{getInitials(user.name)}
+							{getInitials(currentUser.name)}
 						</span>
 
 						<span className="nav-bar__profile-info">
-							<span className="nav-bar__profile-name">{user.name}</span>
-							<span className="nav-bar__profile-role">{user.role}</span>
+							<span className="nav-bar__profile-name">{currentUser.name}</span>
+							<span className="nav-bar__profile-role">{currentUser.role}</span>
 						</span>
 
 						<span className="nav-bar__profile-icon" aria-hidden="true">

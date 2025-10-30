@@ -14,6 +14,7 @@ import {
   ForgotPassword,
   MisCursos,
   VistaDetalladaCurso,
+  Grupos,
   ActividadesEntregas,
   MisCalificaciones,
   Asistencias,
@@ -22,6 +23,7 @@ import {
   MiPerfil,
   LandingPage
 } from './pages';
+import EntregasPage from './pages/Entregas/EntregasPage';
 import './App.css';
 import './styles/api-states.css';
 
@@ -58,8 +60,9 @@ function App() {
         <Route path="/login" element={renderPageClean(Login)} />
         <Route path="/recuperar-password" element={renderPageClean(ForgotPassword)} />
         <Route path="/dashboard" element={renderPage(Dashboard)} />
-        <Route path="/mis-cursos" element={renderPage(MisCursos)} />
-        <Route path="/curso/:id" element={renderPage(VistaDetalladaCurso)} />
+        <Route path="/mis-cursos" element={renderPageClean(MisCursos)} />
+        <Route path="/curso/:id" element={renderPageClean(VistaDetalladaCurso)} />
+  <Route path="/curso/:id/grupos" element={renderPageClean(Grupos)} />
         <Route path="/actividades-entregas" element={renderPage(ActividadesEntregas)} />
         <Route path="/mis-calificaciones" element={renderPage(MisCalificaciones)} />
         <Route path="/asistencias" element={renderPage(Asistencias)} />
@@ -69,6 +72,7 @@ function App() {
         <Route path="/estudiantes" element={renderPage(Estudiantes)} />
         <Route path="/actividades" element={renderPage(Actividades)} />
         <Route path="/crear-actividad" element={renderPage(CrearActividad)} />
+        <Route path="/entregas" element={renderPage(EntregasPage)} />
         <Route path="/chat" element={renderPage(Chat)} />
         <Route path="/configuracion" element={renderPage(Configuracion)} />
         <Route path="*" element={<NotFound />} />

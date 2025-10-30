@@ -1,0 +1,233 @@
+.entregas-page {
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 3px solid #932428;
+
+    h1 {
+      color: #2d3748;
+      font-size: 2rem;
+      margin: 0;
+    }
+  }
+
+  .btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+
+    &.btn-primary {
+      background-color: #932428;
+      color: white;
+
+      &:hover {
+        background-color: #69181b;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(147, 36, 40, 0.3);
+      }
+    }
+  }
+
+  .alert {
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+
+    &.alert-error {
+      background-color: #fed7d7;
+      color: #c53030;
+      border: 2px solid #fc8181;
+    }
+  }
+
+  .loading {
+    text-align: center;
+    padding: 4rem;
+    font-size: 1.2rem;
+    color: #718096;
+  }
+
+  .form-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 1rem;
+    overflow-y: auto;
+
+    .form-container {
+      background: white;
+      border-radius: 12px;
+      padding: 2rem;
+      max-width: 800px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+
+      h2 {
+        margin-top: 0;
+        color: #2d3748;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #e2e8f0;
+      }
+    }
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    background-color: #f7fafc;
+    border-radius: 12px;
+    border: 2px dashed #cbd5e0;
+
+    p {
+      font-size: 1.2rem;
+      color: #718096;
+      margin-bottom: 1.5rem;
+    }
+  }
+
+  .table-container {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+
+      thead {
+        background-color: #932428;
+        color: white;
+
+        th {
+          padding: 1rem;
+          text-align: left;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          font-size: 0.875rem;
+        }
+      }
+
+      tbody {
+        tr {
+          border-bottom: 1px solid #e2e8f0;
+          transition: background-color 0.2s;
+
+          &:hover {
+            background-color: #f7fafc;
+          }
+
+          &:last-child {
+            border-bottom: none;
+          }
+
+          td {
+            padding: 1rem;
+            color: #2d3748;
+
+            &.actions {
+              display: flex;
+              gap: 0.5rem;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  .calificacion {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    background-color: #48bb78;
+    color: white;
+    border-radius: 20px;
+    font-weight: 600;
+  }
+
+  .sin-calificar {
+    color: #a0aec0;
+    font-style: italic;
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 600;
+
+    &.badge-success {
+      background-color: #c6f6d5;
+      color: #22543d;
+    }
+
+    &.badge-warning {
+      background-color: #feebc8;
+      color: #7c2d12;
+    }
+  }
+
+  .btn-icon {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 6px;
+    transition: all 0.2s;
+
+    &:hover {
+      background-color: #f7fafc;
+      transform: scale(1.1);
+    }
+
+    &.btn-delete:hover {
+      background-color: #fed7d7;
+    }
+  }
+
+  // Responsive
+  @media (max-width: 768px) {
+    padding: 1rem;
+
+    .page-header {
+      flex-direction: column;
+      gap: 1rem;
+      align-items: stretch;
+
+      h1 {
+        font-size: 1.5rem;
+      }
+    }
+
+    .table-container {
+      overflow-x: auto;
+
+      table {
+        min-width: 800px;
+      }
+    }
+  }
+}

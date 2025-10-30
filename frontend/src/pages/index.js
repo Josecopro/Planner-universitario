@@ -9,6 +9,7 @@ export { default as Login } from './Login';
 export { default as ForgotPassword } from './ForgotPassword';
 export { default as MisCursos } from './MisCursos';
 export { default as VistaDetalladaCurso } from './VistaDetalladaCurso';
+export { default as Grupos } from './Grupos';
 export { default as ActividadesEntregas } from './ActividadesEntregas';
 export { default as MisCalificaciones } from './MisCalificaciones';
 export { default as Asistencias } from './Asistencias';
