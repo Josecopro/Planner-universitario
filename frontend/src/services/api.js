@@ -66,16 +66,181 @@ async function postJson(url, body) {
 // Minimal activities API used by CrearActividad and Actividades pages.
 export const activitiesApi = {
   create: async (data) => {
-    // Try conventional backend route first; if it fails, store locally as fallback
     try {
-      return await postJson('/api/actividades', data);
+      console.log('📝 [activitiesApi] Creando nueva actividad:', data);
+      
+      const { supabase } = await import('../config/supabase');
+      
+      // Mapear campos del frontend a la estructura de la BD
+      const actividadData = {
+        grupo_id: data.grupo_id,
+        titulo: data.titulo,
+        descripcion: data.descripcion,
+        fecha_entrega: data.fecha_entrega,
+        tipo: data.tipo || 'Tarea',
+        prioridad: data.prioridad || 'Media',
+        estado: 'Programada',
+        porcentaje: data.porcentaje || 0.0
+      };
+
+      const { data: actividad, error } = await supabase
+        .from('actividadevaluativa')
+        .insert([actividadData])
+        .select()
+        .single();
+
+      if (error) {
+        console.error('❌ Error al crear actividad:', error);
+        throw error;
+      }
+
+      console.log('✅ Actividad creada:', actividad);
+      return actividad;
     } catch (err) {
-      // Fallback: save draft locally so the UI can continue during development
-      const drafts = JSON.parse(localStorage.getItem('local_actividades') || '[]');
-      const item = { id: Date.now(), ...data };
-      drafts.push(item);
-      localStorage.setItem('local_actividades', JSON.stringify(drafts));
-      return item;
+      console.error('❌ Error en activitiesApi.create:', err);
+      throw err;
+    }
+  },
+
+  getAll: async (grupoId = null) => {
+    try {
+      console.log('🔍 [activitiesApi] Obteniendo actividades...');
+      
+      const { supabase } = await import('../config/supabase');
+      
+      let query = supabase
+        .from('actividadevaluativa')
+        .select(`
+          *,
+          grupo:grupo_id (
+            id,
+            semestre,
+            curso:curso_id (
+              codigo,
+              nombre
+            )
+          )
+        `)
+        .order('fecha_entrega', { ascending: true });
+
+      if (grupoId) {
+        query = query.eq('grupo_id', grupoId);
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        console.error('❌ Error al obtener actividades:', error);
+        throw error;
+      }
+
+      console.log('✅ Actividades obtenidas:', data);
+      return data || [];
+    } catch (err) {
+      console.error('❌ Error en activitiesApi.getAll:', err);
+      return [];
+    }
+  },
+
+  getByProfesor: async (correo) => {
+    try {
+      console.log('🔍 [activitiesApi] Obteniendo actividades del profesor:', correo);
+      
+      const { supabase } = await import('../config/supabase');
+      
+      // Obtener el usuario
+      const { data: usuario, error: userError } = await supabase
+        .from('usuarios')
+        .select('id')
+        .eq('correo', correo)
+        .single();
+
+      if (userError || !usuario) {
+        console.error('❌ Error al buscar usuario:', userError);
+        return [];
+      }
+
+      // Obtener el profesor
+      const { data: profesor, error: profError } = await supabase
+        .from('profesor')
+        .select('id')
+        .eq('usuario_id', usuario.id)
+        .single();
+
+      if (profError || !profesor) {
+        console.error('❌ Error al buscar profesor:', profError);
+        return [];
+      }
+
+      // Obtener grupos del profesor
+      const { data: grupos, error: gruposError } = await supabase
+        .from('grupo')
+        .select('id')
+        .eq('profesor_id', profesor.id);
+
+      if (gruposError) {
+        console.error('❌ Error al obtener grupos:', gruposError);
+        return [];
+      }
+
+      const grupoIds = (grupos || []).map(g => g.id);
+      console.log('✅ Grupos del profesor:', grupoIds);
+
+      if (grupoIds.length === 0) {
+        return [];
+      }
+
+      // Obtener actividades de esos grupos
+      const { data: actividades, error: actError } = await supabase
+        .from('actividadevaluativa')
+        .select(`
+          *,
+          grupo:grupo_id (
+            id,
+            semestre,
+            curso:curso_id (
+              codigo,
+              nombre
+            )
+          )
+        `)
+        .in('grupo_id', grupoIds)
+        .order('fecha_entrega', { ascending: true });
+
+      if (actError) {
+        console.error('❌ Error al obtener actividades:', actError);
+        return [];
+      }
+
+      console.log('✅ Actividades del profesor:', actividades);
+      return actividades || [];
+    } catch (err) {
+      console.error('❌ Error en activitiesApi.getByProfesor:', err);
+      return [];
+    }
+  },
+
+  delete: async (id) => {
+    try {
+      console.log('🗑️ [activitiesApi] Eliminando actividad:', id);
+      
+      const { supabase } = await import('../config/supabase');
+      
+      const { error } = await supabase
+        .from('actividadevaluativa')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        console.error('❌ Error al eliminar actividad:', error);
+        throw error;
+      }
+
+      console.log('✅ Actividad eliminada correctamente');
+      return true;
+    } catch (err) {
+      console.error('❌ Error en activitiesApi.delete:', err);
+      throw err;
     }
   },
 

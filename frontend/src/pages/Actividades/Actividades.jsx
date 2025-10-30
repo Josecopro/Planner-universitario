@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useApi, useMutation, activitiesApi } from '../../services/api';
+import React, { useState, useEffect } from 'react';
+import { activitiesApi } from '../../services/api';
 import './Actividades.scss';
 import { Link } from 'react-router-dom';
 
@@ -9,43 +9,97 @@ const Actividades = () => {
   const [filterPriority, setFilterPriority] = useState('all');
   const [filterSubject, setFilterSubject] = useState('all');
   const [sortBy, setSortBy] = useState('dueDate');
+  
+  const [activities, setActivities] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [mutationLoading, setMutationLoading] = useState(false);
 
-  const { data: activities, loading, error, refetch } = useApi(() => activitiesApi.getAll());
-  const { mutate, loading: mutationLoading } = useMutation();
+  useEffect(() => {
+    loadActivities();
+  }, []);
+
+  const loadActivities = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Obtener correo del profesor desde localStorage
+      const userStr = localStorage.getItem('user');
+      if (!userStr) {
+        throw new Error('No se encontró información del usuario');
+      }
+
+      const user = JSON.parse(userStr);
+      const correo = user.correo;
+
+      console.log('📧 Correo del profesor:', correo);
+
+      // Cargar actividades del profesor
+      const data = await activitiesApi.getByProfesor(correo);
+      setActivities(data);
+      
+      console.log('✅ Actividades cargadas:', data);
+    } catch (err) {
+      console.error('❌ Error al cargar actividades:', err);
+      setError(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Asegurar que activities sea un array antes de usar filter
   const activitiesArray = activities || [];
 
   const filteredAndSortedActivities = activitiesArray
     .filter(activity => {
-      const statusMatch = filterStatus === 'all' || activity.status === filterStatus;
-      const priorityMatch = filterPriority === 'all' || activity.priority === filterPriority;
+      // Mapear estados de BD a estados del filtro
+      const estadoMap = {
+        'Programada': 'pending',
+        'En Progreso': 'in-progress',
+        'Completada': 'completed',
+        'Cancelada': 'cancelled'
+      };
+      
+      const prioridadMap = {
+        'Alta': 'high',
+        'Media': 'medium',
+        'Baja': 'low'
+      };
+
+      const activityStatus = estadoMap[activity.estado] || 'pending';
+      const activityPriority = prioridadMap[activity.prioridad] || 'medium';
+
+      const statusMatch = filterStatus === 'all' || activityStatus === filterStatus;
+      const priorityMatch = filterPriority === 'all' || activityPriority === filterPriority;
+      
       return statusMatch && priorityMatch;
     })
     .sort((a, b) => {
-      if (sortBy === 'dueDate') return new Date(a.due_date || a.dueDate) - new Date(b.due_date || b.dueDate);
+      if (sortBy === 'dueDate') return new Date(a.fecha_entrega) - new Date(b.fecha_entrega);
       if (sortBy === 'priority') {
-        const priorityOrder = { high: 3, medium: 2, low: 1 };
-        return priorityOrder[b.priority] - priorityOrder[a.priority];
+        const priorityOrder = { Alta: 3, Media: 2, Baja: 1 };
+        return priorityOrder[b.prioridad] - priorityOrder[a.prioridad];
       }
-      if (sortBy === 'status') return a.status.localeCompare(b.status);
+      if (sortBy === 'status') return a.estado.localeCompare(b.estado);
       return 0;
     });
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'completed': return '#48bb78';
-      case 'in-progress': return '#ed8936';
-      case 'pending': return '#f56565';
+  const getStatusColor = (estado) => {
+    switch (estado) {
+      case 'Completada': return '#48bb78';
+      case 'En Progreso': return '#ed8936';
+      case 'Programada': return '#4299e1';
+      case 'Cancelada': return '#a0aec0';
       default: return '#a0aec0';
     }
   };
 
-  const getPriorityColor = (priority) => {
-    switch (priority) {
-      case 'high': return '#f56565';
-      case 'medium': return '#ed8936';
-      case 'low': return '#48bb78';
+  const getPriorityColor = (prioridad) => {
+    switch (prioridad) {
+      case 'Alta': return '#f56565';
+      case 'Media': return '#ed8936';
+      case 'Baja': return '#48bb78';
       default: return '#a0aec0';
     }
   };
@@ -66,14 +120,17 @@ const Actividades = () => {
     return diffDays;
   };
 
-  const handleDeleteActivity = async (id, title) => {
-    if (window.confirm(`¿Estás seguro de que quieres eliminar "${title}"?`)) {
+  const handleDeleteActivity = async (id, titulo) => {
+    if (window.confirm(`¿Estás seguro de que quieres eliminar "${titulo}"?`)) {
       try {
-        await mutate(() => activitiesApi.delete(id));
-        await refetch(); // Actualizar la lista
+        setMutationLoading(true);
+        await activitiesApi.delete(id);
+        await loadActivities(); // Recargar la lista
         alert('Actividad eliminada correctamente');
       } catch (error) {
         alert(`Error al eliminar actividad: ${error.message}`);
+      } finally {
+        setMutationLoading(false);
       }
     }
   };
@@ -95,7 +152,7 @@ const Actividades = () => {
         <div className="error-state">
           <h2>Error al cargar actividades</h2>
           <p>{error.message}</p>
-          <button onClick={refetch} className="retry-button">
+          <button onClick={loadActivities} className="retry-button">
             Reintentar
           </button>
         </div>
@@ -162,65 +219,69 @@ const Actividades = () => {
 
       <div className="activities-stats">
         <div className="stat-card">
-          <div className="stat-number">{activities.filter(a => a.status === 'pending').length}</div>
+          <div className="stat-number">{activities.filter(a => a.estado === 'Programada').length}</div>
           <div className="stat-label">Pendientes</div>
         </div>
         <div className="stat-card">
-          <div className="stat-number">{activities.filter(a => a.status === 'in-progress').length}</div>
+          <div className="stat-number">{activities.filter(a => a.estado === 'En Progreso').length}</div>
           <div className="stat-label">En Progreso</div>
         </div>
         <div className="stat-card">
-          <div className="stat-number">{activities.filter(a => a.status === 'completed').length}</div>
+          <div className="stat-number">{activities.filter(a => a.estado === 'Completada').length}</div>
           <div className="stat-label">Completadas</div>
         </div>
         <div className="stat-card">
-          <div className="stat-number">{activities.filter(a => getDaysUntilDue(a.dueDate) <= 3 && a.status !== 'completed').length}</div>
+          <div className="stat-number">{activities.filter(a => getDaysUntilDue(a.fecha_entrega) <= 3 && a.estado !== 'Completada').length}</div>
           <div className="stat-label">Urgentes</div>
         </div>
       </div>
 
       <div className="activities-list">
         {filteredAndSortedActivities.map(activity => {
-          const daysUntilDue = getDaysUntilDue(activity.due_date || activity.dueDate);
-          const isOverdue = daysUntilDue < 0 && activity.status !== 'completed';
-          const isUrgent = daysUntilDue <= 3 && daysUntilDue >= 0 && activity.status !== 'completed';
+          const daysUntilDue = getDaysUntilDue(activity.fecha_entrega);
+          const isOverdue = daysUntilDue < 0 && activity.estado !== 'Completada';
+          const isUrgent = daysUntilDue <= 3 && daysUntilDue >= 0 && activity.estado !== 'Completada';
 
           return (
-            <div key={activity.id} className={`activity-card ${activity.status} ${isOverdue ? 'overdue' : ''} ${isUrgent ? 'urgent' : ''}`}>
+            <div key={activity.id} className={`activity-card ${activity.estado.toLowerCase().replace(' ', '-')} ${isOverdue ? 'overdue' : ''} ${isUrgent ? 'urgent' : ''}`}>
               <div className="activity-header">
                 <div className="activity-title-section">
-                  <h3 className="activity-title">{activity.title}</h3>
-                  <span className="activity-subject">{activity.subject}</span>
+                  <h3 className="activity-title">{activity.titulo}</h3>
+                  <span className="activity-subject">{activity.grupo?.curso?.nombre || 'Sin curso'}</span>
                 </div>
                 <div className="activity-badges">
                   <span 
                     className="priority-badge" 
-                    style={{ backgroundColor: getPriorityColor(activity.priority) }}
+                    style={{ backgroundColor: getPriorityColor(activity.prioridad) }}
                   >
-                    {activity.priority === 'high' ? 'Alta' : activity.priority === 'medium' ? 'Media' : 'Baja'}
+                    {activity.prioridad}
                   </span>
                   <span 
                     className="status-badge"
-                    style={{ backgroundColor: getStatusColor(activity.status) }}
+                    style={{ backgroundColor: getStatusColor(activity.estado) }}
                   >
-                    {activity.status === 'completed' ? 'Completada' : 
-                     activity.status === 'in-progress' ? 'En Progreso' : 'Pendiente'}
+                    {activity.estado}
                   </span>
                 </div>
               </div>
 
-              <p className="activity-description">{activity.description}</p>
+              <p className="activity-description">{activity.descripcion}</p>
 
               <div className="activity-footer">
                 <div className="activity-dates">
                   <div className="due-date">
                     <span className="date-label">Vence:</span>
                     <span className={`date-value ${isOverdue ? 'overdue' : isUrgent ? 'urgent' : ''}`}>
-                      {formatDate(activity.due_date || activity.dueDate)}
+                      {formatDate(activity.fecha_entrega)}
                       {isOverdue && ` (${Math.abs(daysUntilDue)} días atrasado)`}
                       {isUrgent && ` (${daysUntilDue} días restantes)`}
                     </span>
                   </div>
+                  {activity.tipo && (
+                    <div className="activity-type">
+                      <span className="type-badge">{activity.tipo}</span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="activity-actions">
@@ -228,12 +289,12 @@ const Actividades = () => {
                   <button className="action-btn view">👁️</button>
                   <button 
                     className="action-btn delete"
-                    onClick={() => handleDeleteActivity(activity.id, activity.title)}
+                    onClick={() => handleDeleteActivity(activity.id, activity.titulo)}
                     disabled={mutationLoading}
                   >
                     🗑️
                   </button>
-                  {activity.status !== 'completed' && (
+                  {activity.estado !== 'Completada' && (
                     <button className="action-btn complete">✅</button>
                   )}
                 </div>

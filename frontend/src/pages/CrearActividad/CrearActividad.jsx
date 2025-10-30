@@ -1,50 +1,102 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useMutation, activitiesApi } from '../../services/api';
+import { activitiesApi } from '../../services/api';
 import './CrearActividad.scss';
 
 const CrearActividad = () => {
   const navigate = useNavigate();
-  const { mutate: createActivity, loading: isCreating } = useMutation(activitiesApi.create);
   
   const [formData, setFormData] = useState({
-    title: '',
-    subject: '',
-    description: '',
-    dueDate: '',
-    dueTime: '',
-    priority: 'medium',
-    category: 'tarea',
-    estimatedHours: '',
-    tags: [],
-    reminders: [],
-    attachments: []
+    grupo_id: '',
+    titulo: '',
+    descripcion: '',
+    fecha_entrega: '',
+    hora_entrega: '',
+    tipo: 'Tarea',
+    prioridad: 'Media',
+    porcentaje: ''
   });
 
-  const [newTag, setNewTag] = useState('');
+  const [gruposDisponibles, setGruposDisponibles] = useState([]);
+  const [isCreating, setIsCreating] = useState(false);
   const [errors, setErrors] = useState({});
 
-  const subjects = [
-    'Cálculo I',
-    'Historia Universal',
-    'Química Orgánica',
-    'Programación',
-    'Marketing Digital',
-    'Física',
-    'Literatura',
-    'Inglés',
-    'Estadística',
-    'Otra'
-  ];
+  useEffect(() => {
+    loadGruposProfesor();
+  }, []);
 
-  const categories = [
-    { value: 'tarea', label: 'Tarea' },
-    { value: 'examen', label: 'Examen' },
-    { value: 'proyecto', label: 'Proyecto' },
-    { value: 'presentacion', label: 'Presentación' },
-    { value: 'laboratorio', label: 'Laboratorio' },
-    { value: 'ensayo', label: 'Ensayo' },
-    { value: 'investigacion', label: 'Investigación' }
+  const loadGruposProfesor = async () => {
+    try {
+      // Obtener correo del profesor desde localStorage
+      const userStr = localStorage.getItem('user');
+      if (!userStr) {
+        console.warn('No se encontró información del usuario');
+        return;
+      }
+
+      const user = JSON.parse(userStr);
+      const correo = user.correo;
+
+      console.log('📧 Cargando grupos del profesor:', correo);
+
+      const { supabase } = await import('../../config/supabase');
+
+      // Obtener el usuario
+      const { data: usuario, error: userError } = await supabase
+        .from('usuarios')
+        .select('id')
+        .eq('correo', correo)
+        .single();
+
+      if (userError || !usuario) {
+        console.error('❌ Error al buscar usuario:', userError);
+        return;
+      }
+
+      // Obtener el profesor
+      const { data: profesor, error: profError } = await supabase
+        .from('profesor')
+        .select('id')
+        .eq('usuario_id', usuario.id)
+        .single();
+
+      if (profError || !profesor) {
+        console.error('❌ Error al buscar profesor:', profError);
+        return;
+      }
+
+      // Obtener grupos del profesor con información del curso
+      const { data: grupos, error: gruposError } = await supabase
+        .from('grupo')
+        .select(`
+          id,
+          semestre,
+          curso:curso_id (
+            codigo,
+            nombre
+          )
+        `)
+        .eq('profesor_id', profesor.id);
+
+      if (gruposError) {
+        console.error('❌ Error al obtener grupos:', gruposError);
+        return;
+      }
+
+      console.log('✅ Grupos cargados:', grupos);
+      setGruposDisponibles(grupos || []);
+    } catch (err) {
+      console.error('❌ Error al cargar grupos:', err);
+    }
+  };
+
+  const tiposActividad = [
+    { value: 'Tarea', label: 'Tarea' },
+    { value: 'Examen', label: 'Examen' },
+    { value: 'Proyecto', label: 'Proyecto' },
+    { value: 'Presentacion', label: 'Presentación' },
+    { value: 'Laboratorio', label: 'Laboratorio' },
+    { value: 'Ensayo', label: 'Ensayo' }
   ];
 
   const handleInputChange = (e) => {
@@ -59,69 +111,35 @@ const CrearActividad = () => {
     }
   };
 
-  const handleAddTag = (e) => {
-    if (e) e.preventDefault();
-    if (newTag.trim() && !formData.tags.includes(newTag.trim())) {
-      setFormData(prev => ({
-        ...prev,
-        tags: [...prev.tags, newTag.trim()]
-      }));
-      setNewTag('');
-    }
-  };
-
-  const handleRemoveTag = (tagToRemove) => {
-    setFormData(prev => ({
-      ...prev,
-      tags: prev.tags.filter(tag => tag !== tagToRemove)
-    }));
-  };
-
-  const addReminder = () => {
-    const newReminder = {
-      id: Date.now(),
-      type: 'email',
-      time: '1-day',
-      message: 'Recordatorio de actividad pendiente'
-    };
-    setFormData(prev => ({
-      ...prev,
-      reminders: [...prev.reminders, newReminder]
-    }));
-  };
-
-  const removeReminder = (id) => {
-    setFormData(prev => ({
-      ...prev,
-      reminders: prev.reminders.filter(reminder => reminder.id !== id)
-    }));
-  };
-
   const validateForm = () => {
     const newErrors = {};
 
-    if (!formData.title.trim()) {
-      newErrors.title = 'El título es obligatorio';
+    if (!formData.grupo_id) {
+      newErrors.grupo_id = 'Debes seleccionar un grupo';
     }
 
-    if (!formData.subject.trim()) {
-      newErrors.subject = 'La materia es obligatoria';
+    if (!formData.titulo.trim()) {
+      newErrors.titulo = 'El título es obligatorio';
     }
 
-    if (!formData.dueDate) {
-      newErrors.dueDate = 'La fecha de entrega es obligatoria';
+    if (!formData.fecha_entrega) {
+      newErrors.fecha_entrega = 'La fecha de entrega es obligatoria';
     } else {
-      const selectedDate = new Date(formData.dueDate);
+      const selectedDate = new Date(formData.fecha_entrega);
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       
       if (selectedDate < today) {
-        newErrors.dueDate = 'La fecha de entrega no puede ser en el pasado';
+        newErrors.fecha_entrega = 'La fecha de entrega no puede ser en el pasado';
       }
     }
 
-    if (!formData.description.trim()) {
-      newErrors.description = 'La descripción es obligatoria';
+    if (!formData.descripcion.trim()) {
+      newErrors.descripcion = 'La descripción es obligatoria';
+    }
+
+    if (formData.porcentaje && (formData.porcentaje < 0 || formData.porcentaje > 100)) {
+      newErrors.porcentaje = 'El porcentaje debe estar entre 0 y 100';
     }
 
     setErrors(newErrors);
@@ -133,34 +151,42 @@ const CrearActividad = () => {
     
     if (validateForm()) {
       try {
+        setIsCreating(true);
+
+        // Construir la fecha completa con hora si se proporciona
+        let fechaCompleta = formData.fecha_entrega;
+        if (formData.hora_entrega) {
+          fechaCompleta = `${formData.fecha_entrega}T${formData.hora_entrega}:00`;
+        } else {
+          fechaCompleta = `${formData.fecha_entrega}T23:59:59`;
+        }
+
         const activityData = {
-          title: formData.title,
-          subject: formData.subject,
-          description: formData.description,
-          due_date: formData.dueDate,
-          priority: formData.priority,
-          status: 'pending',
-          category: formData.category,
-          estimated_hours: formData.estimatedHours ? parseInt(formData.estimatedHours) : null,
-          tags: formData.tags
+          grupo_id: parseInt(formData.grupo_id),
+          titulo: formData.titulo,
+          descripcion: formData.descripcion,
+          fecha_entrega: fechaCompleta,
+          tipo: formData.tipo,
+          prioridad: formData.prioridad,
+          porcentaje: formData.porcentaje ? parseFloat(formData.porcentaje) : 0.0
         };
 
-        await createActivity(activityData);
+        console.log('📝 Enviando actividad:', activityData);
+
+        await activitiesApi.create(activityData);
         
         alert('¡Actividad creada exitosamente!');
         
+        // Limpiar formulario
         setFormData({
-          title: '',
-          subject: '',
-          description: '',
-          dueDate: '',
-          dueTime: '',
-          priority: 'medium',
-          category: 'tarea',
-          estimatedHours: '',
-          tags: [],
-          reminders: [],
-          attachments: []
+          grupo_id: '',
+          titulo: '',
+          descripcion: '',
+          fecha_entrega: '',
+          hora_entrega: '',
+          tipo: 'Tarea',
+          prioridad: 'Media',
+          porcentaje: ''
         });
 
         navigate('/actividades');
@@ -168,6 +194,8 @@ const CrearActividad = () => {
       } catch (error) {
         console.error('Error al crear actividad:', error);
         alert(`Error al crear la actividad: ${error.message}`);
+      } finally {
+        setIsCreating(false);
       }
     }
   };
@@ -189,51 +217,67 @@ const CrearActividad = () => {
           <div className="form-section">
             <h2>Información Básica</h2>
             
+            <div className="form-group">
+              <label htmlFor="grupo_id">Grupo / Curso *</label>
+              <select
+                id="grupo_id"
+                name="grupo_id"
+                value={formData.grupo_id}
+                onChange={handleInputChange}
+                className={errors.grupo_id ? 'error' : ''}
+              >
+                <option value="">Selecciona un grupo</option>
+                {gruposDisponibles.map(grupo => (
+                  <option key={grupo.id} value={grupo.id}>
+                    {grupo.curso?.nombre || 'Sin nombre'} - {grupo.curso?.codigo || ''} (Semestre: {grupo.semestre})
+                  </option>
+                ))}
+              </select>
+              {errors.grupo_id && <span className="error-message">{errors.grupo_id}</span>}
+            </div>
+
             <div className="form-row">
               <div className="form-group">
-                <label htmlFor="title">Título de la Actividad *</label>
+                <label htmlFor="titulo">Título de la Actividad *</label>
                 <input
                   type="text"
-                  id="title"
-                  name="title"
-                  value={formData.title}
+                  id="titulo"
+                  name="titulo"
+                  value={formData.titulo}
                   onChange={handleInputChange}
                   placeholder="Ej: Tarea de Cálculo Capítulo 3"
-                  className={errors.title ? 'error' : ''}
+                  className={errors.titulo ? 'error' : ''}
                 />
-                {errors.title && <span className="error-message">{errors.title}</span>}
+                {errors.titulo && <span className="error-message">{errors.titulo}</span>}
               </div>
 
               <div className="form-group">
-                <label htmlFor="subject">Materia *</label>
+                <label htmlFor="tipo">Tipo de Actividad</label>
                 <select
-                  id="subject"
-                  name="subject"
-                  value={formData.subject}
+                  id="tipo"
+                  name="tipo"
+                  value={formData.tipo}
                   onChange={handleInputChange}
-                  className={errors.subject ? 'error' : ''}
                 >
-                  <option value="">Selecciona una materia</option>
-                  {subjects.map(subject => (
-                    <option key={subject} value={subject}>{subject}</option>
+                  {tiposActividad.map(tipo => (
+                    <option key={tipo.value} value={tipo.value}>{tipo.label}</option>
                   ))}
                 </select>
-                {errors.subject && <span className="error-message">{errors.subject}</span>}
               </div>
             </div>
 
             <div className="form-group">
-              <label htmlFor="description">Descripción *</label>
+              <label htmlFor="descripcion">Descripción *</label>
               <textarea
-                id="description"
-                name="description"
-                value={formData.description}
+                id="descripcion"
+                name="descripcion"
+                value={formData.descripcion}
                 onChange={handleInputChange}
                 placeholder="Describe los detalles de la actividad..."
                 rows="4"
-                className={errors.description ? 'error' : ''}
+                className={errors.descripcion ? 'error' : ''}
               />
-              {errors.description && <span className="error-message">{errors.description}</span>}
+              {errors.descripcion && <span className="error-message">{errors.descripcion}</span>}
             </div>
           </div>
 
@@ -242,121 +286,60 @@ const CrearActividad = () => {
             
             <div className="form-row">
               <div className="form-group">
-                <label htmlFor="dueDate">Fecha de Entrega *</label>
+                <label htmlFor="fecha_entrega">Fecha de Entrega *</label>
                 <input
                   type="date"
-                  id="dueDate"
-                  name="dueDate"
-                  value={formData.dueDate}
+                  id="fecha_entrega"
+                  name="fecha_entrega"
+                  value={formData.fecha_entrega}
                   onChange={handleInputChange}
-                  className={errors.dueDate ? 'error' : ''}
+                  className={errors.fecha_entrega ? 'error' : ''}
                 />
-                {errors.dueDate && <span className="error-message">{errors.dueDate}</span>}
+                {errors.fecha_entrega && <span className="error-message">{errors.fecha_entrega}</span>}
               </div>
 
               <div className="form-group">
-                <label htmlFor="dueTime">Hora de Entrega</label>
+                <label htmlFor="hora_entrega">Hora de Entrega</label>
                 <input
                   type="time"
-                  id="dueTime"
-                  name="dueTime"
-                  value={formData.dueTime}
+                  id="hora_entrega"
+                  name="hora_entrega"
+                  value={formData.hora_entrega}
                   onChange={handleInputChange}
                 />
               </div>
 
               <div className="form-group">
-                <label htmlFor="priority">Prioridad</label>
+                <label htmlFor="prioridad">Prioridad</label>
                 <select
-                  id="priority"
-                  name="priority"
-                  value={formData.priority}
+                  id="prioridad"
+                  name="prioridad"
+                  value={formData.prioridad}
                   onChange={handleInputChange}
                 >
-                  <option value="low">Baja</option>
-                  <option value="medium">Media</option>
-                  <option value="high">Alta</option>
+                  <option value="Baja">Baja</option>
+                  <option value="Media">Media</option>
+                  <option value="Alta">Alta</option>
                 </select>
-              </div>
-            </div>
-          </div>
-
-          <div className="form-section">
-            <h2>Categorización</h2>
-            
-            <div className="form-row">
-              <div className="form-group">
-                <label htmlFor="category">Tipo de Actividad</label>
-                <select
-                  id="category"
-                  name="category"
-                  value={formData.category}
-                  onChange={handleInputChange}
-                >
-                  {categories.map(cat => (
-                    <option key={cat.value} value={cat.value}>{cat.label}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="estimatedHours">Horas Estimadas</label>
-                <input
-                  type="number"
-                  id="estimatedHours"
-                  name="estimatedHours"
-                  value={formData.estimatedHours}
-                  onChange={handleInputChange}
-                  placeholder="Ej: 3"
-                  min="0.5"
-                  step="0.5"
-                />
               </div>
             </div>
 
             <div className="form-group">
-              <label>Etiquetas</label>
-              <div className="tags-input">
-                <div className="tags-display">
-                  {formData.tags.map(tag => (
-                    <span key={tag} className="tag">
-                      {tag}
-                      <button type="button" onClick={() => handleRemoveTag(tag)}>×</button>
-                    </span>
-                  ))}
-                </div>
-                <div className="add-tag-form">
-                  <input
-                    type="text"
-                    value={newTag}
-                    onChange={(e) => setNewTag(e.target.value)}
-                    placeholder="Agregar etiqueta..."
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        handleAddTag(e);
-                      }
-                    }}
-                  />
-                  <button type="button" onClick={handleAddTag}>+</button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="form-section">
-            <h2>Recordatorios</h2>
-            
-            <div className="reminders-section">
-              {formData.reminders.map(reminder => (
-                <div key={reminder.id} className="reminder-item">
-                  <span>Recordatorio por email 1 día antes</span>
-                  <button type="button" onClick={() => removeReminder(reminder.id)}>×</button>
-                </div>
-              ))}
-              <button type="button" onClick={addReminder} className="add-reminder-btn">
-                + Agregar Recordatorio
-              </button>
+              <label htmlFor="porcentaje">Porcentaje de Calificación (%)</label>
+              <input
+                type="number"
+                id="porcentaje"
+                name="porcentaje"
+                value={formData.porcentaje}
+                onChange={handleInputChange}
+                placeholder="Ej: 20"
+                min="0"
+                max="100"
+                step="0.01"
+                className={errors.porcentaje ? 'error' : ''}
+              />
+              {errors.porcentaje && <span className="error-message">{errors.porcentaje}</span>}
+              <small>Peso de esta actividad en la nota final (0-100)</small>
             </div>
           </div>
 
@@ -377,18 +360,26 @@ const CrearActividad = () => {
           <div className="preview-card">
             <h3>Vista Previa</h3>
             <div className="activity-preview">
-              <h4>{formData.title || 'Título de la actividad'}</h4>
-              <p className="preview-subject">{formData.subject || 'Materia'}</p>
-              <p className="preview-description">{formData.description || 'Descripción de la actividad'}</p>
+              <h4>{formData.titulo || 'Título de la actividad'}</h4>
+              <p className="preview-subject">
+                {gruposDisponibles.find(g => g.id === parseInt(formData.grupo_id))?.curso?.nombre || 'Selecciona un grupo'}
+              </p>
+              <p className="preview-description">{formData.descripcion || 'Descripción de la actividad'}</p>
               <div className="preview-badges">
-                <span className={`priority-badge ${formData.priority}`}>
-                  {formData.priority === 'high' ? 'Alta' : formData.priority === 'medium' ? 'Media' : 'Baja'}
+                <span className={`priority-badge ${formData.prioridad.toLowerCase()}`}>
+                  {formData.prioridad}
                 </span>
-                <span className="category-badge">{categories.find(c => c.value === formData.category)?.label}</span>
+                <span className="category-badge">{formData.tipo}</span>
               </div>
               <p className="preview-date">
-                {formData.dueDate ? new Date(formData.dueDate).toLocaleDateString('es-ES') : 'Fecha de entrega'}
+                {formData.fecha_entrega ? new Date(formData.fecha_entrega).toLocaleDateString('es-ES') : 'Fecha de entrega'}
+                {formData.hora_entrega && ` a las ${formData.hora_entrega}`}
               </p>
+              {formData.porcentaje && (
+                <p className="preview-percentage">
+                  📊 Peso: {formData.porcentaje}% de la nota final
+                </p>
+              )}
             </div>
           </div>
 
@@ -397,11 +388,18 @@ const CrearActividad = () => {
             <ul>
               <li>Usa títulos descriptivos y claros</li>
               <li>Establece fechas realistas</li>
-              <li>Agrega etiquetas para organizar mejor</li>
-              <li>Estima el tiempo necesario</li>
-              <li>Configura recordatorios útiles</li>
+              <li>Asigna el porcentaje correcto</li>
+              <li>Selecciona el tipo de actividad apropiado</li>
+              <li>Proporciona una descripción detallada</li>
             </ul>
           </div>
+
+          {gruposDisponibles.length === 0 && (
+            <div className="warning-card">
+              <h3>⚠️ Aviso</h3>
+              <p>No tienes grupos asignados. Contacta al administrador para que te asignen grupos.</p>
+            </div>
+          )}
         </div>
       </div>
     </div>
