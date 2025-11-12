@@ -220,6 +220,44 @@ export const activitiesApi = {
     }
   },
 
+  update: async (id, data) => {
+    try {
+      console.log('✏️ [activitiesApi] Actualizando actividad:', id, data);
+      
+      const { supabase } = await import('../config/supabase');
+      
+      // Mapear campos del frontend a la estructura de la BD
+      const actividadData = {
+        grupo_id: data.grupo_id,
+        titulo: data.titulo,
+        descripcion: data.descripcion,
+        fecha_entrega: data.fecha_entrega,
+        tipo: data.tipo || 'Tarea',
+        prioridad: data.prioridad || 'Media',
+        estado: data.estado || 'Programada',
+        porcentaje: data.porcentaje || 0.0
+      };
+
+      const { data: actividad, error } = await supabase
+        .from('actividadevaluativa')
+        .update(actividadData)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('❌ Error al actualizar actividad:', error);
+        throw error;
+      }
+
+      console.log('✅ Actividad actualizada:', actividad);
+      return actividad;
+    } catch (err) {
+      console.error('❌ Error en activitiesApi.update:', err);
+      throw err;
+    }
+  },
+
   delete: async (id) => {
     try {
       console.log('🗑️ [activitiesApi] Eliminando actividad:', id);

@@ -4,6 +4,7 @@ export { default as Estudiantes } from './Estudiantes/Estudiantes';
 export { default as Chat } from './Chat/Chat';
 export { default as Actividades } from './Actividades/Actividades';
 export { default as CrearActividad } from './CrearActividad/CrearActividad';
+export { default as EditarActividad } from './EditarActividad/EditarActividad';
 export { default as Configuracion } from './Configuracion/Configuracion';
 export { default as Login } from './Login';
 export { default as ForgotPassword } from './ForgotPassword';

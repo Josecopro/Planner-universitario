@@ -14,9 +14,16 @@ const Actividades = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [mutationLoading, setMutationLoading] = useState(false);
+  
+  // Estados para el modal de edición
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingActivity, setEditingActivity] = useState(null);
+  const [editFormData, setEditFormData] = useState({});
+  const [gruposDisponibles, setGruposDisponibles] = useState([]);
 
   useEffect(() => {
     loadActivities();
+    loadGruposProfesor();
   }, []);
 
   const loadActivities = async () => {
@@ -45,6 +52,96 @@ const Actividades = () => {
       setError(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadGruposProfesor = async () => {
+    try {
+      const userStr = localStorage.getItem('user');
+      if (!userStr) return;
+
+      const user = JSON.parse(userStr);
+      const correo = user.correo;
+
+      const { supabase } = await import('../../config/supabase');
+
+      // Obtener el usuario
+      const { data: usuario } = await supabase
+        .from('usuarios')
+        .select('id')
+        .eq('correo', correo)
+        .single();
+
+      if (!usuario) return;
+
+      // Obtener el profesor
+      const { data: profesor } = await supabase
+        .from('profesor')
+        .select('id')
+        .eq('usuario_id', usuario.id)
+        .single();
+
+      if (!profesor) return;
+
+      // Obtener grupos del profesor
+      const { data: grupos } = await supabase
+        .from('grupo')
+        .select(`
+          id,
+          semestre,
+          curso:curso_id (
+            codigo,
+            nombre
+          )
+        `)
+        .eq('profesor_id', profesor.id);
+
+      setGruposDisponibles(grupos || []);
+    } catch (err) {
+      console.error('Error al cargar grupos:', err);
+    }
+  };
+
+  const handleEditClick = (activity) => {
+    setEditingActivity(activity);
+    setEditFormData({
+      grupo_id: activity.grupo_id,
+      titulo: activity.titulo,
+      descripcion: activity.descripcion,
+      fecha_entrega: activity.fecha_entrega?.split('T')[0],
+      tipo: activity.tipo || 'Tarea',
+      prioridad: activity.prioridad || 'Media',
+      estado: activity.estado || 'Programada',
+      porcentaje: activity.porcentaje || 0
+    });
+    setShowEditModal(true);
+  };
+
+  const handleEditFormChange = (field, value) => {
+    setEditFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleSaveEdit = async () => {
+    try {
+      setMutationLoading(true);
+      // Asegurarse de que la fecha esté en formato ISO
+      const dataToSave = {
+        ...editFormData,
+        fecha_entrega: `${editFormData.fecha_entrega}T00:00:00`
+      };
+      
+      await activitiesApi.update(editingActivity.id, dataToSave);
+      alert('Actividad actualizada correctamente');
+      setShowEditModal(false);
+      setEditingActivity(null);
+      await loadActivities();
+    } catch (error) {
+      alert(`Error al actualizar actividad: ${error.message}`);
+    } finally {
+      setMutationLoading(false);
     }
   };
 
@@ -285,17 +382,24 @@ const Actividades = () => {
                 </div>
 
                 <div className="activity-actions">
-                  <button className="action-btn edit">✏️</button>
-                  <button className="action-btn view">👁️</button>
+                  <button 
+                    className="action-btn edit"
+                    onClick={() => handleEditClick(activity)}
+                    title="Editar actividad"
+                  >
+                    ✏️
+                  </button>
+                  <button className="action-btn view" title="Ver detalles">👁️</button>
                   <button 
                     className="action-btn delete"
                     onClick={() => handleDeleteActivity(activity.id, activity.titulo)}
                     disabled={mutationLoading}
+                    title="Eliminar actividad"
                   >
                     🗑️
                   </button>
                   {activity.estado !== 'Completada' && (
-                    <button className="action-btn complete">✅</button>
+                    <button className="action-btn complete" title="Marcar como completada">✅</button>
                   )}
                 </div>
               </div>
@@ -309,6 +413,139 @@ const Actividades = () => {
           <div className="no-activities-icon">📝</div>
           <h3>No hay actividades que mostrar</h3>
           <p>Ajusta los filtros o crea una nueva actividad para comenzar.</p>
+        </div>
+      )}
+
+      {/* Modal de Edición */}
+      {showEditModal && editingActivity && (
+        <div className="modal-overlay" onClick={() => setShowEditModal(false)}>
+          <div className="edit-modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Editar Actividad</h2>
+              <button 
+                className="close-btn"
+                onClick={() => setShowEditModal(false)}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="modal-body">
+              <div className="form-group">
+                <label>Grupo</label>
+                <select 
+                  value={editFormData.grupo_id || ''}
+                  onChange={(e) => handleEditFormChange('grupo_id', parseInt(e.target.value))}
+                >
+                  <option value="">Selecciona un grupo</option>
+                  {gruposDisponibles.map(grupo => (
+                    <option key={grupo.id} value={grupo.id}>
+                      {grupo.curso?.nombre} - Grupo {grupo.semestre}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label>Título</label>
+                <input 
+                  type="text"
+                  value={editFormData.titulo || ''}
+                  onChange={(e) => handleEditFormChange('titulo', e.target.value)}
+                  placeholder="Título de la actividad"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Descripción</label>
+                <textarea 
+                  value={editFormData.descripcion || ''}
+                  onChange={(e) => handleEditFormChange('descripcion', e.target.value)}
+                  placeholder="Descripción detallada"
+                  rows="4"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Fecha de Entrega</label>
+                <input 
+                  type="date"
+                  value={editFormData.fecha_entrega || ''}
+                  onChange={(e) => handleEditFormChange('fecha_entrega', e.target.value)}
+                />
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Tipo</label>
+                  <select 
+                    value={editFormData.tipo || 'Tarea'}
+                    onChange={(e) => handleEditFormChange('tipo', e.target.value)}
+                  >
+                    <option value="Tarea">Tarea</option>
+                    <option value="Examen">Examen</option>
+                    <option value="Proyecto">Proyecto</option>
+                    <option value="Presentacion">Presentación</option>
+                    <option value="Laboratorio">Laboratorio</option>
+                    <option value="Ensayo">Ensayo</option>
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label>Prioridad</label>
+                  <select 
+                    value={editFormData.prioridad || 'Media'}
+                    onChange={(e) => handleEditFormChange('prioridad', e.target.value)}
+                  >
+                    <option value="Baja">Baja</option>
+                    <option value="Media">Media</option>
+                    <option value="Alta">Alta</option>
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label>Estado</label>
+                  <select 
+                    value={editFormData.estado || 'Programada'}
+                    onChange={(e) => handleEditFormChange('estado', e.target.value)}
+                  >
+                    <option value="Programada">Programada</option>
+                    <option value="En Progreso">En Progreso</option>
+                    <option value="Completada">Completada</option>
+                    <option value="Cancelada">Cancelada</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>Porcentaje (% de calificación)</label>
+                <input 
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={editFormData.porcentaje || 0}
+                  onChange={(e) => handleEditFormChange('porcentaje', parseFloat(e.target.value))}
+                  placeholder="0"
+                />
+              </div>
+            </div>
+
+            <div className="modal-footer">
+              <button 
+                className="btn-cancel"
+                onClick={() => setShowEditModal(false)}
+              >
+                Cancelar
+              </button>
+              <button 
+                className="btn-save"
+                onClick={handleSaveEdit}
+                disabled={mutationLoading}
+              >
+                {mutationLoading ? 'Guardando...' : 'Guardar Cambios'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

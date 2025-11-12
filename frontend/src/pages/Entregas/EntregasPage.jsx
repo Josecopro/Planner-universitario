@@ -12,15 +12,15 @@ const EntregasPage = () => {
     create,
     update,
     remove
-  } = useSupabaseCRUD('entregas');
+  } = useSupabaseCRUD('Entrega');
 
   const [showForm, setShowForm] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [actividades, setActividades] = useState([]);
   const [estudiantes, setEstudiantes] = useState([]);
 
-  const actividadesCRUD = useSupabaseCRUD('actividades_evaluativas');
-  const estudiantesCRUD = useSupabaseCRUD('estudiantes');
+  const actividadesCRUD = useSupabaseCRUD('ActividadEvaluativa');
+  const estudiantesCRUD = useSupabaseCRUD('Estudiante');
 
   useEffect(() => {
     loadData();
@@ -29,7 +29,21 @@ const EntregasPage = () => {
   const loadData = async () => {
     try {
       await fetchAll({
-        select: '*, actividades_evaluativas(titulo), estudiantes(nombre, apellido)',
+        select: `
+          id,
+          actividad_id,
+          inscripcion_id,
+          fecha_entrega,
+          estado,
+          texto_entrega,
+          archivos_adjuntos,
+          ActividadEvaluativa(id, titulo, descripcion),
+          Inscripcion(
+            id,
+            estudiante_id,
+            Estudiante(id, usuario_id, Usuarios(nombre, apellido))
+          )
+        `,
         orderBy: { column: 'fecha_entrega', ascending: false }
       });
 
@@ -46,7 +60,7 @@ const EntregasPage = () => {
 
   const formFields = [
     {
-      name: 'actividad_evaluativa_id',
+      name: 'actividad_id',
       label: 'Actividad Evaluativa',
       type: 'select',
       required: true,
@@ -56,62 +70,50 @@ const EntregasPage = () => {
       }))
     },
     {
-      name: 'estudiante_id',
-      label: 'Estudiante',
+      name: 'inscripcion_id',
+      label: 'Estudiante (Inscripción)',
       type: 'select',
       required: true,
-      options: estudiantes.map(e => ({
-        value: e.id,
-        label: `${e.nombre} ${e.apellido}`
-      }))
+      options: estudiantes.map(e => {
+        const usuario = e.Usuarios || {};
+        return {
+          value: e.id,
+          label: `${usuario.nombre || ''} ${usuario.apellido || ''}`
+        };
+      })
     },
     {
       name: 'fecha_entrega',
       label: 'Fecha de Entrega',
-      type: 'date',
+      type: 'datetime-local',
       required: true
     },
     {
-      name: 'hora_entrega',
-      label: 'Hora de Entrega',
-      type: 'time',
-      required: false
+      name: 'estado',
+      label: 'Estado',
+      type: 'select',
+      required: true,
+      options: [
+        { value: 'Entregada', label: 'Entregada' },
+        { value: 'Pendiente', label: 'Pendiente' },
+        { value: 'Revisada', label: 'Revisada' }
+      ],
+      defaultValue: 'Entregada'
     },
     {
-      name: 'archivo_url',
-      label: 'URL del Archivo',
-      type: 'text',
-      placeholder: 'https://...',
-      help: 'URL del archivo entregado (Google Drive, OneDrive, etc.)'
-    },
-    {
-      name: 'comentarios',
-      label: 'Comentarios',
+      name: 'texto_entrega',
+      label: 'Texto/Descripción de la Entrega',
       type: 'textarea',
       rows: 4,
-      placeholder: 'Comentarios adicionales sobre la entrega...'
+      placeholder: 'Escribe aquí el contenido de la entrega...'
     },
     {
-      name: 'calificacion',
-      label: 'Calificación',
-      type: 'number',
-      min: 0,
-      max: 5,
-      step: 0.1,
-      placeholder: '0.0 - 5.0'
-    },
-    {
-      name: 'retroalimentacion',
-      label: 'Retroalimentación',
+      name: 'archivos_adjuntos',
+      label: 'URLs de Archivos Adjuntos',
       type: 'textarea',
       rows: 3,
-      placeholder: 'Retroalimentación del profesor...'
-    },
-    {
-      name: 'entregado_tarde',
-      label: 'Entregado Tarde',
-      type: 'checkbox',
-      defaultValue: false
+      placeholder: 'Una URL por línea (https://...)',
+      help: 'Puedes agregar múltiples URLs de archivos separadas por líneas'
     }
   ];
 
@@ -212,65 +214,61 @@ const EntregasPage = () => {
                   <th>Actividad</th>
                   <th>Estudiante</th>
                   <th>Fecha</th>
-                  <th>Calificación</th>
                   <th>Estado</th>
                   <th>Acciones</th>
                 </tr>
               </thead>
               <tbody>
-                {entregas.map(entrega => (
-                  <tr key={entrega.id}>
-                    <td>{entrega.actividades_evaluativas?.titulo || 'N/A'}</td>
-                    <td>
-                      {entrega.estudiantes 
-                        ? `${entrega.estudiantes.nombre} ${entrega.estudiantes.apellido}`
-                        : 'N/A'}
-                    </td>
-                    <td>
-                      {new Date(entrega.fecha_entrega).toLocaleDateString('es-ES')}
-                      {entrega.hora_entrega && ` - ${entrega.hora_entrega}`}
-                    </td>
-                    <td>
-                      {entrega.calificacion 
-                        ? <span className="calificacion">{entrega.calificacion.toFixed(1)}</span>
-                        : <span className="sin-calificar">Sin calificar</span>
-                      }
-                    </td>
-                    <td>
-                      {entrega.entregado_tarde 
-                        ? <span className="badge badge-warning">Tarde</span>
-                        : <span className="badge badge-success">A tiempo</span>
-                      }
-                    </td>
-                    <td className="actions">
-                      <button 
-                        className="btn-icon btn-edit"
-                        onClick={() => handleEdit(entrega)}
-                        title="Editar"
-                      >
-                        ✏️
-                      </button>
-                      <button 
-                        className="btn-icon btn-delete"
-                        onClick={() => handleDelete(entrega.id)}
-                        title="Eliminar"
-                      >
-                        🗑️
-                      </button>
-                      {entrega.archivo_url && (
-                        <a 
-                          href={entrega.archivo_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="btn-icon btn-view"
-                          title="Ver archivo"
+                {entregas.map(entrega => {
+                  const actividad = entrega.ActividadEvaluativa || {};
+                  const inscripcion = entrega.Inscripcion || {};
+                  const estudiante = inscripcion.Estudiante || {};
+                  const usuario = estudiante.Usuarios || {};
+                  
+                  return (
+                    <tr key={entrega.id}>
+                      <td>{actividad.titulo || 'N/A'}</td>
+                      <td>
+                        {usuario.nombre && usuario.apellido
+                          ? `${usuario.nombre} ${usuario.apellido}`
+                          : 'N/A'}
+                      </td>
+                      <td>
+                        {new Date(entrega.fecha_entrega).toLocaleDateString('es-ES')}
+                      </td>
+                      <td>
+                        <span className={`estado estado-${entrega.estado?.toLowerCase() || 'pendiente'}`}>
+                          {entrega.estado || 'Pendiente'}
+                        </span>
+                      </td>
+                      <td className="actions">
+                        <button 
+                          className="btn-icon btn-edit"
+                          onClick={() => handleEdit(entrega)}
+                          title="Editar"
                         >
-                          📄
-                        </a>
-                      )}
-                    </td>
-                  </tr>
-                ))}
+                          ✏️
+                        </button>
+                        <button 
+                          className="btn-icon btn-delete"
+                          onClick={() => handleDelete(entrega.id)}
+                          title="Eliminar"
+                        >
+                          🗑️
+                        </button>
+                        {entrega.archivos_adjuntos && entrega.archivos_adjuntos.length > 0 && (
+                          <button 
+                            className="btn-icon btn-view"
+                            onClick={() => alert(`Archivos:\n${entrega.archivos_adjuntos.join('\n')}`)}
+                            title="Ver archivos"
+                          >
+                            📄
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
