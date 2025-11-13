@@ -153,8 +153,9 @@ const Actividades = () => {
       // Mapear estados de BD a estados del filtro
       const estadoMap = {
         'Programada': 'pending',
-        'En Progreso': 'in-progress',
-        'Completada': 'completed',
+        'Publicada': 'pending',
+        'Abierta': 'in-progress',
+        'Cerrada': 'completed',
         'Cancelada': 'cancelled'
       };
       
@@ -184,12 +185,17 @@ const Actividades = () => {
 
   const getStatusColor = (estado) => {
     switch (estado) {
-      case 'Completada': return '#48bb78';
-      case 'En Progreso': return '#ed8936';
+      case 'Cerrada': return '#48bb78';
+      case 'Abierta': return '#ed8936';
+      case 'Publicada': return '#2b6cb0';
       case 'Programada': return '#4299e1';
       case 'Cancelada': return '#a0aec0';
       default: return '#a0aec0';
     }
+  };
+
+  const isCompleted = (estado) => {
+    return estado === 'Completada' || estado === 'Cerrada';
   };
 
   const getPriorityColor = (prioridad) => {
@@ -229,6 +235,34 @@ const Actividades = () => {
       } finally {
         setMutationLoading(false);
       }
+    }
+  };
+
+  const handleMarkCompleted = async (activity) => {
+    if (!activity || !activity.id) return;
+    if (!window.confirm(`¿Marcar "${activity.titulo}" como completada?`)) return;
+
+    try {
+      setMutationLoading(true);
+
+      const dataToUpdate = {
+        grupo_id: activity.grupo_id,
+        titulo: activity.titulo,
+        descripcion: activity.descripcion,
+        fecha_entrega: activity.fecha_entrega,
+        tipo: activity.tipo || 'Tarea',
+        prioridad: activity.prioridad || 'Media',
+        estado: 'Cerrada',
+        porcentaje: activity.porcentaje || 0.0
+      };
+
+      await activitiesApi.update(activity.id, dataToUpdate);
+      alert('Actividad marcada como completada');
+      await loadActivities();
+    } catch (error) {
+      alert(`Error al marcar como completada: ${error.message}`);
+    } finally {
+      setMutationLoading(false);
     }
   };
 
@@ -320,15 +354,15 @@ const Actividades = () => {
           <div className="stat-label">Pendientes</div>
         </div>
         <div className="stat-card">
-          <div className="stat-number">{activities.filter(a => a.estado === 'En Progreso').length}</div>
+          <div className="stat-number">{activities.filter(a => a.estado === 'Abierta').length}</div>
           <div className="stat-label">En Progreso</div>
         </div>
         <div className="stat-card">
-          <div className="stat-number">{activities.filter(a => a.estado === 'Completada').length}</div>
+          <div className="stat-number">{activities.filter(a => isCompleted(a.estado)).length}</div>
           <div className="stat-label">Completadas</div>
         </div>
         <div className="stat-card">
-          <div className="stat-number">{activities.filter(a => getDaysUntilDue(a.fecha_entrega) <= 3 && a.estado !== 'Completada').length}</div>
+          <div className="stat-number">{activities.filter(a => getDaysUntilDue(a.fecha_entrega) <= 3 && !isCompleted(a.estado)).length}</div>
           <div className="stat-label">Urgentes</div>
         </div>
       </div>
@@ -336,8 +370,8 @@ const Actividades = () => {
       <div className="activities-list">
         {filteredAndSortedActivities.map(activity => {
           const daysUntilDue = getDaysUntilDue(activity.fecha_entrega);
-          const isOverdue = daysUntilDue < 0 && activity.estado !== 'Completada';
-          const isUrgent = daysUntilDue <= 3 && daysUntilDue >= 0 && activity.estado !== 'Completada';
+          const isOverdue = daysUntilDue < 0 && !isCompleted(activity.estado);
+          const isUrgent = daysUntilDue <= 3 && daysUntilDue >= 0 && !isCompleted(activity.estado);
 
           return (
             <div key={activity.id} className={`activity-card ${activity.estado.toLowerCase().replace(' ', '-')} ${isOverdue ? 'overdue' : ''} ${isUrgent ? 'urgent' : ''}`}>
@@ -398,8 +432,15 @@ const Actividades = () => {
                   >
                     🗑️
                   </button>
-                  {activity.estado !== 'Completada' && (
-                    <button className="action-btn complete" title="Marcar como completada">✅</button>
+                  {!isCompleted(activity.estado) && (
+                    <button
+                      className="action-btn complete"
+                      title="Marcar como completada"
+                      onClick={() => handleMarkCompleted(activity)}
+                      disabled={mutationLoading}
+                    >
+                      ✅
+                    </button>
                   )}
                 </div>
               </div>
@@ -510,8 +551,9 @@ const Actividades = () => {
                     onChange={(e) => handleEditFormChange('estado', e.target.value)}
                   >
                     <option value="Programada">Programada</option>
-                    <option value="En Progreso">En Progreso</option>
-                    <option value="Completada">Completada</option>
+                    <option value="Publicada">Publicada</option>
+                    <option value="Abierta">Abierta</option>
+                    <option value="Cerrada">Cerrada</option>
                     <option value="Cancelada">Cancelada</option>
                   </select>
                 </div>

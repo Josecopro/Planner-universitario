@@ -314,8 +314,9 @@ const EditarActividad = () => {
                 onChange={(e) => handleChange('estado', e.target.value)}
               >
                 <option value="Programada">Programada</option>
-                <option value="En Progreso">En Progreso</option>
-                <option value="Completada">Completada</option>
+                <option value="Publicada">Publicada</option>
+                <option value="Abierta">Abierta</option>
+                <option value="Cerrada">Cerrada</option>
                 <option value="Cancelada">Cancelada</option>
               </select>
             </div>
