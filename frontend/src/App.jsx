@@ -22,7 +22,7 @@ import {
   HorarioSemanal,
   MiPerfil,
   LandingPage,
-  EditarActividad
+  Usuarios
 } from './pages';
 import EntregasPage from './pages/Entregas/EntregasPage';
 import './App.css';
@@ -71,6 +71,7 @@ function App() {
         <Route path="/horario-semanal" element={renderPage(HorarioSemanal)} />
         <Route path="/mi-perfil" element={renderPage(MiPerfil)} />
         <Route path="/estudiantes" element={renderPage(Estudiantes)} />
+        <Route path="/usuarios" element={renderPage(Usuarios)} />
         <Route path="/actividades" element={renderPage(Actividades)} />
         <Route path="/crear-actividad" element={renderPage(CrearActividad)} />
         <Route path="/editar-actividad/:id" element={renderPage(EditarActividad)} />

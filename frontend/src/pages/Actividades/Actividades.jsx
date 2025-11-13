@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { activitiesApi } from '../../services/api';
 import './Actividades.scss';
 import { Link } from 'react-router-dom';
+import CalificarEntregas from '../../components/CalificarEntregas/CalificarEntregas';
 
 const Actividades = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -15,11 +16,22 @@ const Actividades = () => {
   const [error, setError] = useState(null);
   const [mutationLoading, setMutationLoading] = useState(false);
   
-  // Estados para el modal de edición
-  const [showEditModal, setShowEditModal] = useState(false);
+  // Estado para ver detalles de actividad
+  const [selectedActivity, setSelectedActivity] = useState(null);
+  const [activeTab, setActiveTab] = useState('info'); // 'info' o 'entregas'
+  
+  // Estado para editar actividad
   const [editingActivity, setEditingActivity] = useState(null);
-  const [editFormData, setEditFormData] = useState({});
-  const [gruposDisponibles, setGruposDisponibles] = useState([]);
+  const [editFormData, setEditFormData] = useState({
+    titulo: '',
+    descripcion: '',
+    fecha_entrega: '',
+    hora_entrega: '',
+    tipo: 'Tarea',
+    prioridad: 'Media',
+    porcentaje: ''
+  });
+  const [editErrors, setEditErrors] = useState({});
 
   useEffect(() => {
     loadActivities();
@@ -241,34 +253,6 @@ const Actividades = () => {
     }
   };
 
-  const handleMarkCompleted = async (activity) => {
-    if (!activity || !activity.id) return;
-    if (!window.confirm(`¿Marcar "${activity.titulo}" como completada?`)) return;
-
-    try {
-      setMutationLoading(true);
-
-      const dataToUpdate = {
-        grupo_id: activity.grupo_id,
-        titulo: activity.titulo,
-        descripcion: activity.descripcion,
-        fecha_entrega: activity.fecha_entrega,
-        tipo: activity.tipo || 'Tarea',
-        prioridad: activity.prioridad || 'Media',
-        estado: 'Cerrada',
-        porcentaje: activity.porcentaje || 0.0
-      };
-
-      await activitiesApi.update(activity.id, dataToUpdate);
-      alert('Actividad marcada como completada');
-      await loadActivities();
-    } catch (error) {
-      alert(`Error al marcar como completada: ${error.message}`);
-    } finally {
-      setMutationLoading(false);
-    }
-  };
-
   if (loading) {
     return (
       <div className="actividades-container">
@@ -419,14 +403,8 @@ const Actividades = () => {
                 </div>
 
                 <div className="activity-actions">
-                  <button 
-                    className="action-btn edit"
-                    onClick={() => handleEditClick(activity)}
-                    title="Editar actividad"
-                  >
-                    ✏️
-                  </button>
-                  <button className="action-btn view" title="Ver detalles">👁️</button>
+                  <button className="action-btn edit">✏️</button>
+                  <button className="action-btn view">👁️</button>
                   <button 
                     className="action-btn delete"
                     onClick={() => handleDeleteActivity(activity.id, activity.titulo)}
@@ -457,140 +435,6 @@ const Actividades = () => {
           <div className="no-activities-icon">📝</div>
           <h3>No hay actividades que mostrar</h3>
           <p>Ajusta los filtros o crea una nueva actividad para comenzar.</p>
-        </div>
-      )}
-
-      {/* Modal de Edición */}
-      {showEditModal && editingActivity && (
-        <div className="modal-overlay" onClick={() => setShowEditModal(false)}>
-          <div className="edit-modal" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>Editar Actividad</h2>
-              <button 
-                className="close-btn"
-                onClick={() => setShowEditModal(false)}
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="modal-body">
-              <div className="form-group">
-                <label>Grupo</label>
-                <select 
-                  value={editFormData.grupo_id || ''}
-                  onChange={(e) => handleEditFormChange('grupo_id', parseInt(e.target.value))}
-                >
-                  <option value="">Selecciona un grupo</option>
-                  {gruposDisponibles.map(grupo => (
-                    <option key={grupo.id} value={grupo.id}>
-                      {grupo.curso?.nombre} - Grupo {grupo.semestre}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="form-group">
-                <label>Título</label>
-                <input 
-                  type="text"
-                  value={editFormData.titulo || ''}
-                  onChange={(e) => handleEditFormChange('titulo', e.target.value)}
-                  placeholder="Título de la actividad"
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Descripción</label>
-                <textarea 
-                  value={editFormData.descripcion || ''}
-                  onChange={(e) => handleEditFormChange('descripcion', e.target.value)}
-                  placeholder="Descripción detallada"
-                  rows="4"
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Fecha de Entrega</label>
-                <input 
-                  type="date"
-                  value={editFormData.fecha_entrega || ''}
-                  onChange={(e) => handleEditFormChange('fecha_entrega', e.target.value)}
-                />
-              </div>
-
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Tipo</label>
-                  <select 
-                    value={editFormData.tipo || 'Tarea'}
-                    onChange={(e) => handleEditFormChange('tipo', e.target.value)}
-                  >
-                    <option value="Tarea">Tarea</option>
-                    <option value="Examen">Examen</option>
-                    <option value="Proyecto">Proyecto</option>
-                    <option value="Presentacion">Presentación</option>
-                    <option value="Laboratorio">Laboratorio</option>
-                    <option value="Ensayo">Ensayo</option>
-                  </select>
-                </div>
-
-                <div className="form-group">
-                  <label>Prioridad</label>
-                  <select 
-                    value={editFormData.prioridad || 'Media'}
-                    onChange={(e) => handleEditFormChange('prioridad', e.target.value)}
-                  >
-                    <option value="Baja">Baja</option>
-                    <option value="Media">Media</option>
-                    <option value="Alta">Alta</option>
-                  </select>
-                </div>
-
-                <div className="form-group">
-                  <label>Estado</label>
-                  <select 
-                    value={editFormData.estado || 'Programada'}
-                    onChange={(e) => handleEditFormChange('estado', e.target.value)}
-                  >
-                    <option value="Programada">Programada</option>
-                    <option value="Publicada">Publicada</option>
-                    <option value="Abierta">Abierta</option>
-                    <option value="Cerrada">Cerrada</option>
-                    <option value="Cancelada">Cancelada</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label>Porcentaje (% de calificación)</label>
-                <input 
-                  type="number"
-                  min="0"
-                  max="100"
-                  value={editFormData.porcentaje || 0}
-                  onChange={(e) => handleEditFormChange('porcentaje', parseFloat(e.target.value))}
-                  placeholder="0"
-                />
-              </div>
-            </div>
-
-            <div className="modal-footer">
-              <button 
-                className="btn-cancel"
-                onClick={() => setShowEditModal(false)}
-              >
-                Cancelar
-              </button>
-              <button 
-                className="btn-save"
-                onClick={handleSaveEdit}
-                disabled={mutationLoading}
-              >
-                {mutationLoading ? 'Guardando...' : 'Guardar Cambios'}
-              </button>
-            </div>
-          </div>
         </div>
       )}
     </div>

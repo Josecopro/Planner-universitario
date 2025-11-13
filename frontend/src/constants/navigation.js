@@ -4,6 +4,7 @@ export const APP_PAGES = [
   { path: '/estudiantes', label: 'Estudiantes', icon: '👥', showInSidebar: true },
   { path: '/actividades', label: 'Actividades', icon: '📝', showInSidebar: true },
   { path: '/crear-actividad', label: 'Crear actividad', icon: '➕', showInSidebar: false },
+  { path: '/usuarios', label: 'Usuarios', icon: '👤', showInSidebar: true, roleRequired: 1 },
   { path: '/chat', label: 'Chat', icon: '💬', showInSidebar: false },
   { path: '/configuracion', label: 'Configuración', icon: '⚙️', showInSidebar: false }
 ];
