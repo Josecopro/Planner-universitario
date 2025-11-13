@@ -11,21 +11,7 @@ const Grupos = () => {
   useEffect(() => {
     let mounted = true;
     
-    // Obtener el correo del usuario logueado desde localStorage
-    const userStr = localStorage.getItem('user');
-    let correo = null;
-    
-    if (userStr) {
-      try {
-        const user = JSON.parse(userStr);
-        correo = user.email || user.correo;
-        console.log('📧 [Grupos] Correo del usuario logueado:', correo);
-      } catch (e) {
-        console.error('❌ Error al parsear usuario de localStorage:', e);
-      }
-    }
-    
-    coursesApi.groupsForCourse(courseId, correo).then(data => {
+    coursesApi.groupsForCourse(courseId).then(data => {
       if (!mounted) return;
       console.log('✅ [Grupos] Grupos recibidos:', data);
       setGrupos(data || []);
@@ -71,7 +57,7 @@ const Grupos = () => {
                 </div>
               )}
               <div className="grupo-actions">
-                <Link to={`/curso/${courseId}`} className="btn btn-primary">Ir al Dashboard del Curso</Link>
+                <Link to={`/dashboard/grupo/${g.id}`} className="btn btn-primary">Ver Dashboard del Grupo</Link>
               </div>
             </div>
           ))}

@@ -5,7 +5,7 @@
 // API to call conventional REST endpoints. Projects can replace these
 // implementations with richer service clients (axios, supabase, etc.).
 
-export function useApi(fetcher, deps = []) {
+export function useApi(fetcher) {
   // Very small hook-like contract (not a React hook to avoid forcing React import
   // in many files). Pages in this repo call useApi mainly as a convenience.
   // To keep things stable we return a function that runs the fetcher.
@@ -704,7 +704,7 @@ export const coursesApi = {
     }
   },
 
-  groupsForCourse: async (courseId, correo) => {
+  groupsForCourse: async (courseId) => {
     try {
       console.log('🔍 [coursesApi] Buscando grupos para curso:', courseId);
       
@@ -722,11 +722,11 @@ export const coursesApi = {
     }
   },
 
-  getDashboardData: async (courseId, correo) => {
+  getDashboardData: async (courseId) => {
     try {
       console.log('🔍 [coursesApi] Obteniendo dashboard para curso:', courseId);
       
-      const dashboardData = await getDashboardCurso(courseId, correo);
+      const dashboardData = await getDashboardCurso(courseId);
       console.log('✅ [coursesApi] Dashboard obtenido:', dashboardData);
       
       return dashboardData;
@@ -913,6 +913,268 @@ export const usuariosApi = {
   }
 };
 
+// API para el dashboard del profesor
+export const dashboardApi = {
+  /**
+   * Obtiene datos completos del dashboard para un grupo específico
+   * Incluye entregas, calificaciones y estadísticas
+   */
+  getDataByGroup: async (grupoId) => {
+    try {
+      console.log('🔍 [dashboardApi] Obteniendo datos del dashboard para grupo:', grupoId);
+      
+      const { supabase } = await import('../config/supabase');
+      
+      // 1. Obtener información del grupo
+      const { data: grupo, error: grupoError } = await supabase
+        .from('grupo')
+        .select(`
+          id,
+          semestre,
+          cupo_maximo,
+          cupo_actual,
+          estado,
+          curso:curso_id (
+            id,
+            codigo,
+            nombre
+          )
+        `)
+        .eq('id', grupoId)
+        .single();
+
+      if (grupoError) {
+        console.error('❌ Error al obtener grupo:', grupoError);
+        throw grupoError;
+      }
+
+      console.log('✅ Grupo obtenido:', grupo);
+
+      // 2. Obtener actividades del grupo
+      const { data: actividades, error: actError } = await supabase
+        .from('actividadevaluativa')
+        .select('*')
+        .eq('grupo_id', grupoId)
+        .order('fecha_entrega', { ascending: true });
+
+      if (actError) {
+        console.error('❌ Error al obtener actividades:', actError);
+        throw actError;
+      }
+
+      console.log('✅ Actividades obtenidas:', actividades);
+
+      // 3. Obtener entregas para estas actividades
+      const actividadIds = (actividades || []).map(a => a.id);
+      let entregas = [];
+      
+      if (actividadIds.length > 0) {
+        const { data: entregasData, error: entregasError } = await supabase
+          .from('entrega')
+          .select(`
+            id,
+            actividad_id,
+            estudiante_id,
+            grupo_id,
+            fecha_entrega,
+            estado,
+            estudiante:usuarios!entrega_estudiante_id_fkey (
+              id,
+              nombre,
+              apellido,
+              correo
+            )
+          `)
+          .in('actividad_id', actividadIds)
+          .eq('grupo_id', grupoId);
+
+        if (!entregasError) {
+          entregas = entregasData || [];
+        }
+      }
+
+      console.log('✅ Entregas obtenidas:', entregas);
+
+      // 4. Obtener calificaciones para estas entregas
+      const entregaIds = entregas.map(e => e.id);
+      let calificaciones = [];
+      
+      if (entregaIds.length > 0) {
+        const { data: calificacionesData, error: calError } = await supabase
+          .from('calificacion')
+          .select('*')
+          .in('entrega_id', entregaIds);
+
+        if (!calError) {
+          calificaciones = calificacionesData || [];
+        }
+      }
+
+      console.log('✅ Calificaciones obtenidas:', calificaciones);
+
+      // 5. Obtener estudiantes matriculados en el grupo
+      const { data: matriculas } = await supabase
+        .from('matricula')
+        .select(`
+          estudiante_id,
+          usuarios!estudiante_id (
+            id,
+            nombre,
+            apellido,
+            correo
+          )
+        `)
+        .eq('grupo_id', grupoId);
+
+      const estudiantes = (matriculas || []).map(m => ({
+        id: m.estudiante_id,
+        nombre: m.usuarios.nombre,
+        apellido: m.usuarios.apellido,
+        correo: m.usuarios.correo
+      }));
+
+      console.log('✅ Estudiantes obtenidos:', estudiantes);
+
+      // 6. Calcular estadísticas
+      const stats = calculateGroupStats(
+        grupo,
+        estudiantes,
+        actividades,
+        entregas,
+        calificaciones
+      );
+
+      console.log('✅ Estadísticas calculadas:', stats);
+
+      return {
+        grupo,
+        estudiantes,
+        actividades,
+        entregas,
+        calificaciones,
+        stats
+      };
+    } catch (err) {
+      console.error('❌ Error en dashboardApi.getDataByGroup:', err);
+      throw err;
+    }
+  }
+};
+
+/**
+ * Calcula estadísticas del grupo basadas en entregas y calificaciones
+ */
+function calculateGroupStats(grupo, estudiantes, actividades, entregas, calificaciones) {
+  const totalEstudiantes = estudiantes.length;
+  const totalActividades = actividades.length;
+  const actividadesPendientes = actividades.filter(a => a.estado === 'Abierta' || a.estado === 'Programada').length;
+  
+  // Calcular entregas pendientes (actividades sin entregar por estudiantes)
+  const totalEntregasEsperadas = totalEstudiantes * totalActividades;
+  const totalEntregasRealizadas = entregas.length;
+  const entregasPendientes = Math.max(0, totalEntregasEsperadas - totalEntregasRealizadas);
+  
+  // Calcular promedio general de calificaciones
+  const notasValidas = calificaciones
+    .filter(c => c.nota_obtenida != null)
+    .map(c => parseFloat(c.nota_obtenida));
+  
+  const promedioGeneral = notasValidas.length > 0
+    ? (notasValidas.reduce((sum, nota) => sum + nota, 0) / notasValidas.length).toFixed(2)
+    : 0;
+  
+  // Calcular tasa de entrega
+  const tasaEntrega = totalEntregasEsperadas > 0
+    ? ((totalEntregasRealizadas / totalEntregasEsperadas) * 100).toFixed(1)
+    : 0;
+  
+  // Progreso semanal (últimas 4 semanas)
+  const weeklyProgress = calculateWeeklyProgress(entregas, calificaciones);
+  
+  // Distribución de calificaciones
+  const gradeDistribution = calculateGradeDistribution(calificaciones);
+  
+  return {
+    active_students: totalEstudiantes,
+    general_average: promedioGeneral,
+    pending_submissions: entregasPendientes,
+    attendance: 100, // Placeholder, se puede calcular de tabla de asistencia si existe
+    total_activities: totalActividades,
+    activities_pending: actividadesPendientes,
+    submission_rate: tasaEntrega,
+    weekly_progress: weeklyProgress,
+    grade_distribution: gradeDistribution
+  };
+}
+
+/**
+ * Calcula el progreso semanal de calificaciones
+ */
+function calculateWeeklyProgress(entregas, calificaciones) {
+  const now = new Date();
+  const fourWeeksAgo = new Date(now.getTime() - 28 * 24 * 60 * 60 * 1000);
+  
+  // Agrupar calificaciones por semana
+  const weeklyData = {};
+  
+  calificaciones.forEach(cal => {
+    const entrega = entregas.find(e => e.id === cal.entrega_id);
+    if (!entrega) return;
+    
+    const fechaEntrega = new Date(entrega.fecha_entrega);
+    if (fechaEntrega < fourWeeksAgo) return;
+    
+    const weekNumber = Math.floor((now - fechaEntrega) / (7 * 24 * 60 * 60 * 1000));
+    const weekLabel = weekNumber === 0 ? 'Esta semana' : 
+                     weekNumber === 1 ? 'Hace 1 sem' :
+                     weekNumber === 2 ? 'Hace 2 sem' :
+                     weekNumber === 3 ? 'Hace 3 sem' : 'Hace 4+ sem';
+    
+    if (!weeklyData[weekLabel]) {
+      weeklyData[weekLabel] = { total: 0, count: 0 };
+    }
+    
+    weeklyData[weekLabel].total += parseFloat(cal.nota_obtenida || 0);
+    weeklyData[weekLabel].count += 1;
+  });
+  
+  // Convertir a formato para gráficos
+  const weeks = ['Hace 3 sem', 'Hace 2 sem', 'Hace 1 sem', 'Esta semana'];
+  return weeks.map(week => ({
+    week,
+    value: weeklyData[week] 
+      ? (weeklyData[week].total / weeklyData[week].count).toFixed(2)
+      : 0
+  }));
+}
+
+/**
+ * Calcula la distribución de calificaciones
+ */
+function calculateGradeDistribution(calificaciones) {
+  const distribution = {
+    excelente: 0,  // 4.5 - 5.0
+    bueno: 0,      // 4.0 - 4.4
+    aceptable: 0,  // 3.5 - 3.9
+    bajo: 0        // < 3.5
+  };
+  
+  calificaciones.forEach(cal => {
+    const nota = parseFloat(cal.nota_obtenida || 0);
+    if (nota >= 4.5) distribution.excelente++;
+    else if (nota >= 4.0) distribution.bueno++;
+    else if (nota >= 3.5) distribution.aceptable++;
+    else distribution.bajo++;
+  });
+  
+  return [
+    { name: 'Excelente (4.5-5.0)', value: distribution.excelente, color: '#10b981' },
+    { name: 'Bueno (4.0-4.4)', value: distribution.bueno, color: '#3b82f6' },
+    { name: 'Aceptable (3.5-3.9)', value: distribution.aceptable, color: '#f59e0b' },
+    { name: 'Bajo (<3.5)', value: distribution.bajo, color: '#ef4444' }
+  ];
+}
+
 // Export a small default object for consumers that use default import
 export default {
   useApi,
@@ -920,5 +1182,6 @@ export default {
   activitiesApi,
   studentsApi,
   entregasApi,
-  usuariosApi
+  usuariosApi,
+  dashboardApi
 };

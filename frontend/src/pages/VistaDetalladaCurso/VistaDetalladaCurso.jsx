@@ -97,6 +97,7 @@ const VistaDetalladaCurso = () => {
                 <p>Semestre: {g.semestre}</p>
                 <p>Estudiantes: {g.cupo_actual}/{g.cupo_maximo}</p>
                 <p>Estado: {g.estado}</p>
+                <Link to={`/dashboard/grupo/${g.id}`} className="btn btn-sm">Ver Dashboard</Link>
               </div>
             ))}
           </div>

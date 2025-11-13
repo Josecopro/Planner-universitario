@@ -61,6 +61,7 @@ function App() {
         <Route path="/login" element={renderPageClean(Login)} />
         <Route path="/recuperar-password" element={renderPageClean(ForgotPassword)} />
         <Route path="/dashboard" element={renderPage(Dashboard)} />
+        <Route path="/dashboard/grupo/:grupoId" element={renderPage(Dashboard)} />
         <Route path="/mis-cursos" element={renderPageClean(MisCursos)} />
         <Route path="/curso/:id" element={renderPageClean(VistaDetalladaCurso)} />
   <Route path="/curso/:id/grupos" element={renderPageClean(Grupos)} />
