@@ -52,7 +52,7 @@
   .curso-card {
     background: var(--bg-primary);
     border-radius: 20px;
-    padding: 2rem;
+    padding: 0;
     box-shadow: var(--shadow-md);
     transition: all 0.3s ease;
     border: 2px solid transparent;
@@ -70,12 +70,36 @@
     }
 
     &:hover {
-      transform: translateY(-8px);
       box-shadow: 0 12px 40px rgba(147, 36, 40, 0.2);
       border-color: var(--primary-color);
+    }
 
-      h3 {
+    .curso-card-header {
+      padding: 2rem;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      transition: background-color 0.3s ease;
+
+      &:hover {
+        background-color: var(--bg-secondary);
+
+        h3 {
+          color: var(--primary-color);
+        }
+      }
+
+      .expand-icon {
+        font-size: 1.2rem;
         color: var(--primary-color);
+        transition: transform 0.3s ease;
+        min-width: 30px;
+        text-align: center;
+
+        &.expanded {
+          transform: rotate(0deg);
+        }
       }
     }
 
@@ -122,6 +146,62 @@
         content: '👥';
         font-size: 1.2rem;
       }
+    }
+
+    .grupos-list {
+      padding: 0 1rem 1.5rem 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+
+      .grupo-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 1.5rem;
+        background: var(--bg-secondary);
+        border-radius: 12px;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+
+        &:hover {
+          background: rgba(147, 36, 40, 0.05);
+          border-color: var(--primary-color);
+          transform: translateX(5px);
+        }
+
+        .grupo-info {
+          display: flex;
+          flex-direction: column;
+          gap: 0.25rem;
+
+          .grupo-semestre,
+          .grupo-year {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+          }
+
+          .grupo-semestre {
+            font-weight: 600;
+            color: var(--text-primary);
+          }
+        }
+
+        .btn-dashboard {
+          color: var(--primary-color);
+          font-weight: 600;
+          font-size: 0.9rem;
+          white-space: nowrap;
+        }
+      }
+    }
+
+    .no-grupos {
+      padding: 1rem 2rem 1.5rem 2rem;
+      text-align: center;
+      color: var(--text-secondary);
+      font-style: italic;
     }
 
     .curso-actions {

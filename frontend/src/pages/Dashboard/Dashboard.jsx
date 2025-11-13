@@ -6,12 +6,36 @@ import { generatePerformanceFeedback, generateGroupInsights } from '../../servic
 import './Dashboard.scss';
 
 const Dashboard = () => {
-  const { grupoId } = useParams();
+  const { grupoId: urlGrupoId } = useParams();
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [alerts, setAlerts] = useState([]);
   const [loadingAI, setLoadingAI] = useState(false);
+
+  // Obtener grupoId de URL o de localStorage
+  const getGrupoId = () => {
+    if (urlGrupoId) {
+      console.log('✅ [Dashboard] Usando grupoId de URL:', urlGrupoId);
+      return urlGrupoId;
+    }
+
+    // Intentar obtener de localStorage como fallback
+    try {
+      const storedGrupo = localStorage.getItem('selectedGrupo');
+      if (storedGrupo) {
+        const grupoInfo = JSON.parse(storedGrupo);
+        console.log('💾 [Dashboard] Usando grupoId de localStorage:', grupoInfo.grupoId);
+        return grupoInfo.grupoId;
+      }
+    } catch (e) {
+      console.error('❌ Error al leer grupoId de localStorage:', e);
+    }
+
+    return null;
+  };
+
+  const grupoId = getGrupoId();
 
   // Cargar datos del dashboard
   useEffect(() => {
