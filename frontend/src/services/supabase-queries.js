@@ -215,7 +215,7 @@ export const getActividadesGrupo = async (grupoIds) => {
 /**
  * Obtiene datos completos del dashboard de un curso
  */
-export const getDashboardCurso = async (cursoId, correo) => {
+export const getDashboardCurso = async (cursoId) => {
   console.log('🔍 [supabase-queries] Obteniendo dashboard para curso:', cursoId);
   
   try {
