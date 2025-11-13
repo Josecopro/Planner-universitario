@@ -147,10 +147,6 @@ const Estudiantes = () => {
             <option value="inactive">Inactivos</option>
           </select>
         </div>
-
-        <button className="add-student-btn">
-          + Agregar Estudiante
-        </button>
       </div>
 
       <div className="students-stats">
@@ -184,18 +180,6 @@ const Estudiantes = () => {
 
             <div className={`status-indicator ${student.status}`}>
               {student.status === 'active' ? 'Activo' : 'Inactivo'}
-            </div>
-
-            <div className="student-actions">
-              <button className="action-btn edit">✏️</button>
-              <button className="action-btn view">👁️</button>
-              <button 
-                className="action-btn delete"
-                onClick={() => handleDeleteStudent(student.id, student.name)}
-                disabled={mutationLoading}
-              >
-                🗑️
-              </button>
             </div>
           </div>
         ))}
