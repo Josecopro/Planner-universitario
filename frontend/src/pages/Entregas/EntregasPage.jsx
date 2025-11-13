@@ -234,7 +234,7 @@ const EntregasPage = () => {
                           : 'N/A'}
                       </td>
                       <td>
-                        {new Date(entrega.fecha_entrega).toLocaleDateString('es-ES')}
+                        {new Date(entrega.fecha_entrega).toLocaleDateString('es-ES', { timeZone: 'UTC' })}
                       </td>
                       <td>
                         <span className={`estado estado-${entrega.estado?.toLowerCase() || 'pendiente'}`}>

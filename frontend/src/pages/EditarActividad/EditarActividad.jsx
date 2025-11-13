@@ -151,7 +151,8 @@ const EditarActividad = () => {
       
       const dataToSave = {
         ...formData,
-        fecha_entrega: `${formData.fecha_entrega}T00:00:00`,
+        // Use midday to avoid timezone shifts when storing as timestamptz
+        fecha_entrega: `${formData.fecha_entrega}T12:00:00`,
         porcentaje: parseFloat(formData.porcentaje) || 0
       };
 

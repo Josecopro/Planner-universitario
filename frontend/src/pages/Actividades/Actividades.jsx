@@ -130,7 +130,8 @@ const Actividades = () => {
       // Asegurarse de que la fecha esté en formato ISO
       const dataToSave = {
         ...editFormData,
-        fecha_entrega: `${editFormData.fecha_entrega}T00:00:00`
+        // Use midday to avoid timezone shifts when stored as timestamptz
+        fecha_entrega: `${editFormData.fecha_entrega}T12:00:00`
       };
       
       await activitiesApi.update(editingActivity.id, dataToSave);
@@ -208,10 +209,12 @@ const Actividades = () => {
   };
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('es-ES', {
+    const d = new Date(dateString);
+    return d.toLocaleDateString('es-ES', {
       day: 'numeric',
       month: 'short',
-      year: 'numeric'
+      year: 'numeric',
+      timeZone: 'UTC'
     });
   };
 
