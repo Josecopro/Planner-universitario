@@ -37,9 +37,9 @@ const CalificarEntregas = ({ actividadId, actividadTitulo }) => {
   const openCalificarModal = (entrega) => {
     setModalData({
       entregaId: entrega.id,
-      nota: entrega.calificacion?.nota ?? '',
+      nota: entrega.calificacion?.nota_obtenida ?? '',
       retroalimentacion: entrega.calificacion?.retroalimentacion ?? '',
-      notaActual: entrega.calificacion?.nota ?? null
+      notaActual: entrega.calificacion?.nota_obtenida ?? null
     });
     setCalificandoId(entrega.id);
   };
@@ -131,10 +131,10 @@ const CalificarEntregas = ({ actividadId, actividadTitulo }) => {
             Total: <strong>{entregas.length}</strong>
           </span>
           <span className="stat">
-            Calificadas: <strong>{entregas.filter(e => e.calificacion && e.calificacion.nota != null).length}</strong>
+            Calificadas: <strong>{entregas.filter(e => e.calificacion && e.calificacion.nota_obtenida != null).length}</strong>
           </span>
           <span className="stat">
-            Pendientes: <strong>{entregas.filter(e => !e.calificacion || e.calificacion.nota == null).length}</strong>
+            Pendientes: <strong>{entregas.filter(e => !e.calificacion || e.calificacion.nota_obtenida == null).length}</strong>
           </span>
         </div>
       </div>
@@ -167,9 +167,9 @@ const CalificarEntregas = ({ actividadId, actividadTitulo }) => {
                   >
                     {entrega.estado}
                   </span>
-                  {entrega.calificacion && entrega.calificacion.nota != null ? (
+                  {entrega.calificacion && entrega.calificacion.nota_obtenida != null ? (
                     <span className="nota-badge calificada">
-                      ✅ {Number(entrega.calificacion.nota).toFixed(1)}
+                      ✅ {Number(entrega.calificacion.nota_obtenida).toFixed(1)}
                     </span>
                   ) : (
                     <span className="nota-badge sin-calificar">
@@ -216,12 +216,12 @@ const CalificarEntregas = ({ actividadId, actividadTitulo }) => {
                   </div>
                 )}
 
-                {entrega.calificacion && entrega.calificacion.nota != null && (
+                {entrega.calificacion && entrega.calificacion.nota_obtenida != null && (
                   <div className="calificacion-actual">
                     <h4>Calificación actual:</h4>
                     <div className="calificacion-details">
                       <p className="nota-display">
-                        Nota: <strong>{Number(entrega.calificacion.nota).toFixed(1)} / 5.0</strong>
+                        Nota: <strong>{Number(entrega.calificacion.nota_obtenida).toFixed(1)} / 5.0</strong>
                       </p>
                       {entrega.calificacion.retroalimentacion && (
                         <p className="retroalimentacion">

@@ -424,7 +424,7 @@ export const entregasApi = {
           } : null,
           calificacion: cal ? {
             id: cal.id,
-            nota: cal.nota,
+            nota_obtenida: cal.nota_obtenida,
             retroalimentacion: cal.retroalimentacion,
             fecha_calificacion: cal.fecha_calificacion
           } : null
@@ -464,7 +464,7 @@ export const entregasApi = {
         const { data, error } = await supabase
           .from('calificacion')
           .update({
-            nota: nota,
+            nota_obtenida: nota,
             retroalimentacion: retroalimentacion,
             fecha_calificacion: new Date().toISOString()
           })
@@ -484,7 +484,7 @@ export const entregasApi = {
           .from('calificacion')
           .insert([{
             entrega_id: entregaId,
-            nota: nota,
+            nota_obtenida: nota,
             retroalimentacion: retroalimentacion,
             fecha_calificacion: new Date().toISOString()
           }])
