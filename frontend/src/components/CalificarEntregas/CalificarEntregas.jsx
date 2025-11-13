@@ -37,9 +37,9 @@ const CalificarEntregas = ({ actividadId, actividadTitulo }) => {
   const openCalificarModal = (entrega) => {
     setModalData({
       entregaId: entrega.id,
-      nota: entrega.calificacion?.nota || '',
-      retroalimentacion: entrega.calificacion?.retroalimentacion || '',
-      notaActual: entrega.calificacion?.nota || null
+      nota: entrega.calificacion?.nota ?? '',
+      retroalimentacion: entrega.calificacion?.retroalimentacion ?? '',
+      notaActual: entrega.calificacion?.nota ?? null
     });
     setCalificandoId(entrega.id);
   };
@@ -131,10 +131,10 @@ const CalificarEntregas = ({ actividadId, actividadTitulo }) => {
             Total: <strong>{entregas.length}</strong>
           </span>
           <span className="stat">
-            Calificadas: <strong>{entregas.filter(e => e.calificacion).length}</strong>
+            Calificadas: <strong>{entregas.filter(e => e.calificacion && e.calificacion.nota != null).length}</strong>
           </span>
           <span className="stat">
-            Pendientes: <strong>{entregas.filter(e => !e.calificacion).length}</strong>
+            Pendientes: <strong>{entregas.filter(e => !e.calificacion || e.calificacion.nota == null).length}</strong>
           </span>
         </div>
       </div>
@@ -152,12 +152,12 @@ const CalificarEntregas = ({ actividadId, actividadTitulo }) => {
               <div className="entrega-header">
                 <div className="estudiante-info">
                   <div className="estudiante-avatar">
-                    {entrega.estudiante.nombre.charAt(0)}
-                    {entrega.estudiante.apellido.charAt(0)}
+                    {entrega.estudiante?.nombre?.charAt(0) || 'E'}
+                    {entrega.estudiante?.apellido?.charAt(0) || 'S'}
                   </div>
                   <div className="estudiante-datos">
-                    <h3>{entrega.estudiante.nombre_completo}</h3>
-                    <p className="estudiante-email">{entrega.estudiante.correo}</p>
+                    <h3>{entrega.estudiante?.nombre_completo || 'Estudiante'}</h3>
+                    <p className="estudiante-email">{entrega.estudiante?.correo || 'Sin correo'}</p>
                   </div>
                 </div>
                 <div className="entrega-badges">
@@ -167,9 +167,9 @@ const CalificarEntregas = ({ actividadId, actividadTitulo }) => {
                   >
                     {entrega.estado}
                   </span>
-                  {entrega.calificacion ? (
+                  {entrega.calificacion && entrega.calificacion.nota != null ? (
                     <span className="nota-badge calificada">
-                      ✅ {entrega.calificacion.nota.toFixed(1)}
+                      ✅ {Number(entrega.calificacion.nota).toFixed(1)}
                     </span>
                   ) : (
                     <span className="nota-badge sin-calificar">
@@ -216,12 +216,12 @@ const CalificarEntregas = ({ actividadId, actividadTitulo }) => {
                   </div>
                 )}
 
-                {entrega.calificacion && (
+                {entrega.calificacion && entrega.calificacion.nota != null && (
                   <div className="calificacion-actual">
                     <h4>Calificación actual:</h4>
                     <div className="calificacion-details">
                       <p className="nota-display">
-                        Nota: <strong>{entrega.calificacion.nota.toFixed(1)} / 5.0</strong>
+                        Nota: <strong>{Number(entrega.calificacion.nota).toFixed(1)} / 5.0</strong>
                       </p>
                       {entrega.calificacion.retroalimentacion && (
                         <p className="retroalimentacion">

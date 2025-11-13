@@ -9,6 +9,7 @@ import {
   Chat,
   Actividades,
   CrearActividad,
+  EditarActividad,
   Configuracion,
   Login,
   ForgotPassword,
