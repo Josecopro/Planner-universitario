@@ -66,6 +66,14 @@ const Estudiantes = () => {
     }
   };
 
+  // Función para determinar el color del borde basado en la nota
+  const getGradeColor = (promedio) => {
+    if (promedio === null || promedio === undefined) return 'neutral';
+    if (promedio >= 4) return 'green';
+    if (promedio >= 3) return 'yellow';
+    return 'red';
+  };
+
   const studentsArray = students || [];
   
   const filteredStudents = studentsArray.filter(student => {
@@ -166,7 +174,7 @@ const Estudiantes = () => {
 
       <div className="students-grid">
         {filteredStudents.map(student => (
-          <div key={student.id} className={`student-card ${student.status}`}>
+          <div key={student.id} className={`student-card ${student.status} grade-${getGradeColor(student.promedio_notas)}`}>
             <div className="student-avatar">
               {student.avatar}
             </div>
@@ -176,6 +184,9 @@ const Estudiantes = () => {
               <p className="student-email">{student.email}</p>
               <p className="student-career">{student.career}</p>
               <p className="student-semester">Semestre {student.semester}</p>
+              {student.promedio_notas !== null && (
+                <p className="student-grade">Promedio: {student.promedio_notas.toFixed(2)}</p>
+              )}
             </div>
 
             <div className={`status-indicator ${student.status}`}>

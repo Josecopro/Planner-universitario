@@ -661,21 +661,110 @@ export const studentsApi = {
 
       console.log('✅ Matriculas encontradas:', matriculas);
 
-      // Formatear los datos
-      const estudiantes = (matriculas || []).map(m => ({
-        id: m.estudiante_id,
-        name: `${m.usuarios.nombre} ${m.usuarios.apellido}`,
-        email: m.usuarios.correo,
-        career: m.grupo.curso?.nombre || 'Sin curso',
-        semester: m.grupo.semestre,
-        avatar: `${m.usuarios.nombre.charAt(0)}${m.usuarios.apellido.charAt(0)}`,
-        status: 'active',
-        matricula_id: m.id,
-        grupo_id: m.grupo_id,
-        fecha_matricula: m.fecha_matricula
-      }));
+      // Obtener todas las calificaciones de los estudiantes
+      let calificacionesMap = {};
+      
+      if (grupoIds.length > 0) {
+        try {
+          // Obtener entregas con inscripción
+          const { data: entregas, error: entregasError } = await supabase
+            .from('entrega')
+            .select(`
+              id,
+              inscripcion (
+                estudiante_id,
+                grupo_id
+              )
+            `);
 
-      console.log('✅ Estudiantes del profesor formateados:', estudiantes);
+          if (entregasError) {
+            console.warn('⚠️ Error al obtener entregas:', entregasError);
+          } else {
+            console.log('✅ Entregas encontradas:', entregas?.length);
+
+            // Obtener IDs de entregas para filtrar calificaciones
+            const entregaIds = (entregas || [])
+              .filter(e => {
+                const inscripcion = Array.isArray(e.inscripcion) 
+                  ? e.inscripcion[0] 
+                  : e.inscripcion;
+                return inscripcion && grupoIds.includes(inscripcion.grupo_id);
+              })
+              .map(e => e.id);
+
+            console.log('✅ Entrega IDs filtradas:', entregaIds);
+
+            // Obtener todas las calificaciones
+            if (entregaIds.length > 0) {
+              const { data: calificaciones, error: califError } = await supabase
+                .from('calificacion')
+                .select('entrega_id, nota_obtenida')
+                .in('entrega_id', entregaIds);
+
+              if (califError) {
+                console.warn('⚠️ Error al obtener calificaciones:', califError);
+              } else {
+                console.log('✅ Calificaciones encontradas:', calificaciones);
+
+                // Crear un mapa de entrega_id -> calificación
+                const califMap = {};
+                (calificaciones || []).forEach(calif => {
+                  califMap[calif.entrega_id] = calif.nota_obtenida;
+                });
+
+                // Ahora mapear a estudiantes
+                (entregas || []).forEach(entrega => {
+                  const inscripcion = Array.isArray(entrega.inscripcion) 
+                    ? entrega.inscripcion[0] 
+                    : entrega.inscripcion;
+                  
+                  if (inscripcion && grupoIds.includes(inscripcion.grupo_id)) {
+                    const estudianteId = inscripcion.estudiante_id;
+                    const nota = califMap[entrega.id];
+
+                    if (nota !== null && nota !== undefined) {
+                      if (!calificacionesMap[estudianteId]) {
+                        calificacionesMap[estudianteId] = [];
+                      }
+                      calificacionesMap[estudianteId].push(nota);
+                      console.log(`📝 Nota ${nota} asignada a estudiante ${estudianteId}`);
+                    }
+                  }
+                });
+              }
+            }
+          }
+
+          console.log('✅ Mapa final de calificaciones:', calificacionesMap);
+        } catch (err) {
+          console.error('❌ Error en la query de calificaciones:', err);
+        }
+      }
+
+      // Formatear los datos
+      const estudiantes = (matriculas || []).map(m => {
+        const notas = calificacionesMap[m.estudiante_id] || [];
+        const promedio = notas.length > 0 
+          ? (notas.reduce((a, b) => a + b, 0) / notas.length)
+          : null;
+
+        return {
+          id: m.estudiante_id,
+          name: `${m.usuarios.nombre} ${m.usuarios.apellido}`,
+          email: m.usuarios.correo,
+          career: m.grupo.curso?.nombre || 'Sin curso',
+          semester: m.grupo.semestre,
+          avatar: `${m.usuarios.nombre.charAt(0)}${m.usuarios.apellido.charAt(0)}`,
+          status: 'active',
+          matricula_id: m.id,
+          grupo_id: m.grupo_id,
+          fecha_matricula: m.fecha_matricula,
+          promedio_notas: promedio,
+          calificaciones: notas
+        };
+      });
+
+      console.log('✅ Estudiantes del profesor formateados con calificaciones:', estudiantes);
       return estudiantes;
     } catch (err) {
       console.error('❌ Error en studentsApi.getByProfesor:', err);
@@ -1191,25 +1280,22 @@ function calculateWeeklyProgress(entregas, calificaciones) {
  */
 function calculateGradeDistribution(calificaciones) {
   const distribution = {
-    excelente: 0,  // 4.5 - 5.0
-    bueno: 0,      // 4.0 - 4.4
-    aceptable: 0,  // 3.5 - 3.9
-    bajo: 0        // < 3.5
+    bajo: 0,       // 0 - 2.9
+    aceptable: 0,  // 3.0 - 3.9
+    excelente: 0   // 4.0 - 5.0
   };
   
   calificaciones.forEach(cal => {
     const nota = parseFloat(cal.nota_obtenida || 0);
-    if (nota >= 4.5) distribution.excelente++;
-    else if (nota >= 4.0) distribution.bueno++;
-    else if (nota >= 3.5) distribution.aceptable++;
+    if (nota >= 4.0) distribution.excelente++;
+    else if (nota >= 3.0) distribution.aceptable++;
     else distribution.bajo++;
   });
   
   return [
-    { name: 'Excelente (4.5-5.0)', value: distribution.excelente, color: '#10b981' },
-    { name: 'Bueno (4.0-4.4)', value: distribution.bueno, color: '#3b82f6' },
-    { name: 'Aceptable (3.5-3.9)', value: distribution.aceptable, color: '#f59e0b' },
-    { name: 'Bajo (<3.5)', value: distribution.bajo, color: '#ef4444' }
+    { name: 'Bajo (0-2.9)', value: distribution.bajo, color: '#ef4444' },
+    { name: 'Aceptable (3.0-3.9)', value: distribution.aceptable, color: '#f59e0b' },
+    { name: 'Excelente (4.0-5.0)', value: distribution.excelente, color: '#10b981' }
   ];
 }
 
